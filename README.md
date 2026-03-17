@@ -1,0 +1,1 @@
+Es weren 'clean_data.csv' und 'cleaned_data_dtypes.json' in der Datei 'data/' erwartet. Anschliessend einfach entweder all_int_plots.py ausführen (erstellt alle plots), oder eine der 'p_*.py'-Dateien um einen einzelnen Plot zu generieren.
