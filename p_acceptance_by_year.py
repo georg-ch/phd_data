@@ -15,7 +15,9 @@ def main():
 
     data = load_data("data/clean_data.csv", "data/cleaned_data_dtypes.json")
     df = data[["acceptance_year", "faculty", "institute_name"]].copy()
-    df = df.groupby(["acceptance_year", "faculty", "institute_name"], as_index=False).size()
+    df = df.groupby(
+        ["acceptance_year", "faculty", "institute_name"], as_index=False
+    ).size()
     df = df.rename(columns={"acceptance_year": "year", "size": "count"})
     df = limit_year_range(
         df, year_col="year", start_year=time_period[0], end_year=time_period[1]
