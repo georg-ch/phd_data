@@ -1,9 +1,7 @@
 import pandas as pd
 
-# from cleaning_functions import load_data
 from datetime import datetime
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 def impute_start_month_year(filtered_data, slack_months=2):

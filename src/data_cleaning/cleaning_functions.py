@@ -1231,13 +1231,13 @@ def categorize_uniloc(is_tub, is_fh, is_german, in_eu):
 
 
 def mod_defense_date(defense_date):
-    mask = defense_date == "18-10-0218"
-    defense_date[mask] = "18-10-2018"
-    mask = defense_date == "12-10-0018"
-    defense_date[mask] = "12-10-2018"
-    mask = defense_date == "05-02-0018"
-    defense_date[mask] = "05-02-2018"
-    return defense_date
+    return defense_date.replace(
+        {
+            "18-10-0218": "18-10-2018",
+            "12-10-0018": "12-10-2018",
+            "05-02-0018": "05-02-2018",
+        }
+    )
 
 
 def cship_category(has_german_cship, has_eu_cship):
