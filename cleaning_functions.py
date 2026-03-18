@@ -630,7 +630,9 @@ def commit_issue_data(
     return issues_table
 
 
-def build_cleaned_table(df, keep_original=False):
+def build_cleaned_table(
+    df, keep_original=False, resource_path_name="resources", data_path_name="data"
+):
     """
     Build a cleaned version of the input DataFrame.
     Parameters
@@ -644,7 +646,7 @@ def build_cleaned_table(df, keep_original=False):
         The cleaned DataFrame.
         TODO: description of all columns
     """
-    resources = load_resources(Path("resources"), Path("data"))
+    resources = load_resources(Path(resource_path_name), Path(data_path_name))
     cols = get_cols(df)
 
     # each key is the name of the cleaned column. Its value
