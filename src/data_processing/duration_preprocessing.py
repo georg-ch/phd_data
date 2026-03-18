@@ -1,3 +1,15 @@
+"""Normalize LinkedIn-derived duration data and align it with PDB event dates.
+
+The main entrypoint is ``add_merge_linkedin_data``. It merges the auxiliary
+duration export onto the cleaned PDB dataframe, derives missing month
+components from date strings, applies a small set of consistency rules between
+start/end dates and acceptance/PBA/defense dates, and finally computes a
+duration in years.
+
+Most helpers in this module mutate the passed dataframe and return it again for
+pipeline-style chaining.
+"""
+
 import pandas as pd
 
 from datetime import datetime
@@ -5,6 +17,15 @@ import numpy as np
 
 
 def impute_start_month_year(filtered_data, slack_months=2):
+    """Fill missing LinkedIn start month/year from acceptance and PBA dates.
+
+    Rules:
+    - if both acceptance and PBA years are compatible with the current
+      ``start_year``, use the midpoint month between those two anchors
+    - if only one anchor is compatible, copy that anchor month/year
+    - if neither anchor is compatible and the month is missing, default the
+      month to June and flag ``start_month_guessed``
+    """
     no_start_month_mask = (filtered_data["start_month"] == 0) | (
         filtered_data["start_month"].isna()
     )
@@ -79,6 +100,12 @@ def impute_start_month_year(filtered_data, slack_months=2):
 
 
 def impute_end_month_year(filtered_data, slack_months=2):
+    """Fill missing LinkedIn end month/year from the defense date when plausible.
+
+    If the existing ``end_year`` is compatible with ``defense_year`` within the
+    configured slack window, the defense month/year are copied. Otherwise a
+    missing end month defaults to June.
+    """
     in_ival_mask = check_col_in_month_ival(
         filtered_data,
         "end_year",
@@ -112,6 +139,12 @@ def check_col_in_month_ival(
     checker_month_col_name,
     slack_months=3,
 ):
+    """Return whether ``checked_year`` is within the month-based slack window.
+
+    The interval check is year-granular: it accepts the same year, or the
+    adjacent year when the reference month lies close enough to the year
+    boundary that the slack interval crosses into the next/previous year.
+    """
     checked_year = data[checked_year_col_name]
     checker_year = data[checker_year_col_name]
     checker_month = data[checker_month_col_name]
@@ -133,6 +166,7 @@ def check_col_in_month_ival(
 
 
 def extract_month(date_str):
+    """Parse a ``dd-mm-YYYY`` string and return its month, else ``pd.NA``."""
     if pd.isna(date_str):
         return pd.NA
     try:
@@ -142,6 +176,13 @@ def extract_month(date_str):
 
 
 def start_and_acceptance(joined_data, mode="official", months_soft=12):
+    """Reconcile LinkedIn start dates against acceptance dates.
+
+    In ``official`` mode:
+    - starts more than one month after acceptance are snapped back to
+      acceptance month/year when they are still within the soft threshold
+    - starts at least ``months_soft`` months after acceptance are removed
+    """
     if mode == "official":
         late_start_mask_over12 = within_months_of_signed(
             joined_data,
@@ -168,6 +209,7 @@ def start_and_acceptance(joined_data, mode="official", months_soft=12):
 
 
 def start_and_pba(joined_data, months=12):
+    """Drop start dates that lie too far after the PBA date."""
     mask_more_than12_before_pba = within_months_of_signed(
         joined_data, "pba_year", "pba_month", "start_year", "start_month", months=months
     )
@@ -176,6 +218,7 @@ def start_and_pba(joined_data, months=12):
 
 
 def end_after_defense(joined_data):
+    """Snap end dates that lie after defense back to the defense month/year."""
     end_after_defense_mask = within_months_of_signed(
         joined_data, "end_year", "end_month", "defense_year", "defense_month", months=1
     )
@@ -188,6 +231,13 @@ def end_after_defense(joined_data):
 
 
 def end_before_defense(joined_data, months=12, mode="official"):
+    """Reconcile end dates that lie before the defense date.
+
+    In ``official`` mode:
+    - end dates at least ``months`` months before defense are removed
+    - end dates less than that but still before defense are snapped forward to
+      the defense month/year
+    """
     if mode == "official":
         mask_end_before_defense_over12 = within_months_of_signed(
             joined_data,
@@ -228,7 +278,7 @@ def within_months_of_signed(
     colname_mo_ref,
     months=3,
 ):
-    # return true if checked < / > ref + months, depending on larger=True
+    """Return whether the checked year/month is at least ``months`` after reference."""
     mask = data[colname_yr_checked].notna() & data[colname_mo_checked].notna()
     mask &= data[colname_yr_ref].notna() & data[colname_mo_ref].notna()
 
@@ -246,7 +296,7 @@ def within_months_of_signed(
 def check_start_after_acceptance(
     accept_year, accept_month, start_year, start_month, slack_months=3
 ):
-    # return True if start date is after acceptance date plus slack_months
+    """Return whether start lies after acceptance plus the slack window."""
     accept_month_adjusted = accept_month + slack_months
     if accept_month_adjusted > 12:
         accept_year += 1
@@ -280,7 +330,7 @@ def check_startafter_all(filtered_data, slack_months=3):
 
 
 def check_defense_before_end(def_year, def_month, end_year, end_month, slack_months=3):
-    # return True if defense date is before end date minus slack_months
+    """Return whether defense lies before end minus the slack window."""
     end_month_adjusted = end_month - slack_months
     if end_month_adjusted <= 0:
         end_year -= 1
@@ -343,11 +393,17 @@ def get_large_deviations(
     return large_deviations, delta_months[delta_months > threshold]
 
 
-# data = load_data("data/clean_data.csv", "data/cleaned_data_dtypes.json")
-# durations = pd.read_csv("data/durations.csv")
-
-
 def add_merge_linkedin_data(data, fname_durations):
+    """Merge LinkedIn durations onto cleaned PDB data and normalize date fields.
+
+    Steps:
+    - merge duration rows by ``pagination_nr``
+    - clear zero-coded start/end dates
+    - derive acceptance/PBA/defense months from the raw date strings
+    - preserve the original LinkedIn start/end values in ``*_raw`` columns
+    - apply start/end reconciliation rules
+    - compute ``duration_computed`` in fractional years
+    """
     durations = pd.read_csv(fname_durations)
     joined_data = pd.merge(
         data, durations.drop(columns=["full_name"]), on="pagination_nr", how="left"
@@ -424,125 +480,6 @@ def add_merge_linkedin_data(data, fname_durations):
 
 
 def get_duration(start_year, end_year, start_month, end_month):
+    """Return a fractional-year duration from start/end year-month columns."""
     duration = (end_year - start_year) + (end_month - start_month) / 12
     return duration
-
-
-# joined_data = add_merge_linkedin_data(data, "data/durations.csv")
-#
-# slacks = np.arange(0, 13)
-# defbefore_ratios = []
-# acceptance_ratios = []
-#
-# delta_end = []
-# delta_start = []
-#
-# for slack in slacks:
-#     defbefore_ratio = check_defbefore_all(joined_data, slack_months=slack)
-#     acceptance_ratio = check_startafter_all(joined_data, slack_months=slack)
-#     defbefore_ratios.append(defbefore_ratio)
-#     acceptance_ratios.append(acceptance_ratio)
-#
-#     # starts AFTER acceptance
-#     d_start = deviation_distribution(
-#         joined_data,
-#         "start_year",
-#         "start_month",
-#         "acceptance_year",
-#         "acceptance_month",
-#         slack_months=slack,
-#     )
-#     # ends BEFORE defense
-#     d_end = deviation_distribution(
-#         joined_data,
-#         "end_year",
-#         "end_month",
-#         "defense_year",
-#         "defense_month",
-#         slack_months=-slack,
-#     )
-#     delta_start.append(d_start)
-#     delta_end.append(d_end)
-#
-# if False:
-#     plt.plot(slacks, defbefore_ratios, label="Defense before end")
-#     plt.plot(slacks, acceptance_ratios, label="Start after acceptance")
-#     plt.xlabel("Slack months")
-#     plt.ylabel("Ratio")
-#     plt.title("Ratio of consistent dates vs. slack months")
-#     plt.legend()
-#     plt.grid()
-#     plt.show()
-# if False:
-#     plt.boxplot(delta_start[0], positions=[0], widths=0.4)
-#     plt.boxplot(delta_end[0], positions=[1], widths=0.4)
-#     plt.axhline(2, color="red", linestyle="--", label="2 months")
-#     plt.xticks([0, 1], ["Start - Acceptance", "End - Defense"])
-#     plt.ylabel("Months deviation")
-#     plt.title("Deviation distributions vs. slack months")
-#     plt.legend()
-#     plt.grid()
-#     plt.show()
-#
-
-
-def print_large_deviations(
-    filtered_data,
-    col_name_checked_yr,
-    col_name_checked_mo,
-    col_name_ref_yr,
-    col_name_ref_mo,
-    threshold=10,
-):
-    large_deviations, d_months = get_large_deviations(
-        joined_data,
-        col_name_checked_yr,
-        col_name_checked_mo,
-        col_name_ref_yr,
-        col_name_ref_mo,
-        threshold=threshold,
-    )
-    large_deviations["dev"] = d_months
-    print(
-        large_deviations[
-            [
-                "pagination_nr",
-                col_name_checked_yr,
-                col_name_checked_mo,
-                col_name_ref_yr,
-                col_name_ref_mo,
-                "dev",
-            ]
-        ].sort_values(by="dev", ascending=False)
-    )
-
-
-# print_large_deviations(
-#     joined_data, "pba_year", "pba_month", "start_year", "start_month", threshold=12
-# )
-
-# print_large_deviations(
-#     filtered_data,
-#     "start_year",
-#     "start_month",
-#     "acceptance_year",
-#     "acceptance_month",
-#     threshold=10,
-# )
-
-# print_large_deviations(
-#     filtered_data,
-#     "end_year",
-#     "end_month",
-#     "defense_year",
-#     "defense_month",
-#     threshold=10,
-# )
-# print_large_deviations(
-#     filtered_data,
-#     "defense_year",
-#     "defense_month",
-#     "end_year",
-#     "end_month",
-#     threshold=10,
-# )
