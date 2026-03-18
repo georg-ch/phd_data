@@ -2,7 +2,7 @@ import pandas as pd
 import json
 from tqdm import tqdm
 import re
-from data_processing.duration_preprocessing import add_merge_linkedin_data
+from src.data_processing.duration_preprocessing import add_merge_linkedin_data
 from pandas.api.types import is_numeric_dtype, is_bool_dtype, is_datetime64_any_dtype
 from dataclasses import dataclass
 from pathlib import Path

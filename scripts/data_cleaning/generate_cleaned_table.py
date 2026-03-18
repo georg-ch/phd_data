@@ -1,19 +1,13 @@
-from pathlib import Path
-import sys
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-SRC_DIR = PROJECT_ROOT / "src"
-if str(SRC_DIR) not in sys.path:
-    sys.path.insert(0, str(SRC_DIR))
-
 import pandas as pd
 import json
-from data_cleaning.cleaning_functions import *
+
+from scripts.paths import PROJECT_ROOT, DATA_DIR, RESOURCES_DIR
+from src.data_cleaning.cleaning_functions import build_cleaned_table
 
 
 def main():
     df = pd.read_csv(
-        PROJECT_ROOT / "data/20260113_PDB.csv",
+        DATA_DIR / "20260113_PDB.csv",
         dtype={
             "Betr_Kostst": str,
             "Gutacht1_Kostst": str,
@@ -25,13 +19,13 @@ def main():
     cleaned_df, dtypes_dict = build_cleaned_table(
         df,
         keep_original=True,
-        resource_path=PROJECT_ROOT / "resources",
-        data_path=PROJECT_ROOT / "data",
+        resource_path=RESOURCES_DIR,
+        data_path=DATA_DIR,
     )
 
     # save cleaned DataFrame to CSV
-    cleaned_df.to_csv(PROJECT_ROOT / "data/clean_data.csv", index=False)
-    with open(PROJECT_ROOT / "data/cleaned_data_dtypes.json", "w") as f:
+    cleaned_df.to_csv(DATA_DIR / "clean_data.csv", index=False)
+    with open(RESOURCES_DIR / "cleaned_data_dtypes.json", "w") as f:
         json.dump(dtypes_dict, f)
 
 
