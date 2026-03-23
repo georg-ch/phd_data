@@ -1,0 +1,8 @@
+pandas==2.2.3
+numpy==2.2.6
+scikit-learn==1.7.1
+catboost==1.2.8
+hyperopt==0.2.7
+matplotlib==3.10.3
+aquarel==0.0.7
+setuptools==80.9.0
