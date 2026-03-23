@@ -7,6 +7,7 @@ from src.plotting.plotting_data import (
     remove_dubious_institute_assignments,
 )
 from src.plotting.sankey_interactive import write_sankey_diag_interactive
+from scripts.paths import DATA_DIR
 
 
 def main():
@@ -20,7 +21,7 @@ def main():
     faculty_colormap = params_global["faculty_institute_mappings"]
     faculties = build_faculties(params_global["faculty_institute_mappings"])
 
-    data = load_data("data/clean_data.csv", "data/cleaned_data_dtypes.json")
+    data = load_data(DATA_DIR / "clean_data.csv", DATA_DIR / "cleaned_data_dtypes.json")
     df = data[
         [
             "acceptance_year",

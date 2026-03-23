@@ -1,0 +1,28 @@
+target_col_name = "duration_computed"
+out_fname = "duration_predictions.csv"
+out_path = "data"
+eval_plot_dir = "data/duration_eval_plots"
+orig_cols = [
+  "pagination_nr",
+  "faculty",
+  "lecode",
+  "institute_name",
+  "gender",
+  "pba_date",
+  "acceptance_date",
+  "defense_date",
+  "defense_year",
+  "acceptance_year",
+  "duration_computed",
+  "grade_justnum",
+  "pba_grade_justnum",
+  "birth_year",
+  "has_eu_cship",
+  "has_german_cship",
+  "born_in_eu",
+  "phd_subject",
+]
+naive_est_cols = [
+  "duration_estimate",
+  "duration_estimate_clipped",
+]

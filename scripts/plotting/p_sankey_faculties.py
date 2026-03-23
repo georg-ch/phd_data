@@ -2,6 +2,7 @@ from src.data_loading.load_data import load_data
 from src.plotting.plot_config import load_plot_config
 from src.plotting.plotting_data import limit_year_range
 from src.plotting.sankey_interactive import write_sankey_subject_groups_interactive
+from scripts.paths import DATA_DIR
 
 
 def main():
@@ -15,7 +16,7 @@ def main():
     faculty_colormap = params_global["faculty_institute_mappings"]
     subject_groups = list(params_global["subject_groups"])
 
-    data = load_data("data/clean_data.csv", "data/cleaned_data_dtypes.json")
+    data = load_data(DATA_DIR / "clean_data.csv", DATA_DIR / "cleaned_data_dtypes.json")
     df = data[
         [
             "acceptance_year",

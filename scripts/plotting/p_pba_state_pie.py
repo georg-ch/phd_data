@@ -2,6 +2,7 @@ from src.data_loading.load_data import load_data
 from src.plotting.plot_config import load_plot_config
 from src.plotting.pie_charts import write_category_pie_interactive
 from src.plotting.plotting_data import prepare_yearly_category_counts
+from scripts.paths import DATA_DIR
 
 
 def main():
@@ -15,7 +16,7 @@ def main():
     restcolor = params_global["restcolor"]
     faculty_colormap = params_global["faculty_institute_mappings"]
 
-    data = load_data("data/clean_data.csv", "data/cleaned_data_dtypes.json")
+    data = load_data(DATA_DIR / "clean_data.csv", DATA_DIR / "cleaned_data_dtypes.json")
     df = prepare_yearly_category_counts(
         data,
         year_col="acceptance_year",

@@ -8,6 +8,7 @@ from src.plotting.plotting_data import (
 from src.plotting.year_barplot_interactive import (
     write_category_barplot_interactive_by_category,
 )
+from scripts.paths import DATA_DIR
 
 
 def main():
@@ -23,7 +24,7 @@ def main():
         "NEU": "Nicht-EU-Ausland",
     }
 
-    data = load_data("data/clean_data.csv", "data/cleaned_data_dtypes.json")
+    data = load_data(DATA_DIR / "clean_data.csv", DATA_DIR / "cleaned_data_dtypes.json")
 
     df = prepare_country_cat_matrix(
         data,
