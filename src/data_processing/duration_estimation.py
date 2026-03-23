@@ -844,3 +844,16 @@ def visualize_binned_errors(cv_result, bin_edges, bin_labels, out_dir, theme, bi
     fig.tight_layout()
     fig.savefig(out_file, dpi=200, bbox_inches="tight")
     plt.close(fig)
+
+
+def scatter_gap_ci(cv_result, plot_dir, theme, ci_col="ci_size_adjusted"):
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.scatter(cv_result[ci_col], cv_result["gap_size"], alpha=0.5, s=1)
+    ax.set_ylabel("Gap Size")
+    if ci_col == "ci_size_adjusted":
+        ax.set_xlabel("CI Size (Adjusted)")
+    elif ci_col == "ci_size_raw":
+        ax.set_xlabel("CI Size (Raw)")
+    theme.apply_transforms()
+    plt.savefig(plot_dir / f"gap_size_vs_{ci_col}.png", dpi=200, bbox_inches="tight")
+    plt.close()
