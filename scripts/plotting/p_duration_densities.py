@@ -87,10 +87,11 @@ def main():
     use_model = params["use_model"]
     show_linkedin_and_model = params["show_linkedin_and_model"]
     ci_threshold = params["ci_threshold"]
+    ci_mode = params["ci_mode"]
 
     data = load_data(DATA_DIR / "clean_data.csv", DATA_DIR / "cleaned_data_dtypes.json")
     duration_data = pd.read_csv(DATA_DIR / "duration_predictions.csv")
-    combined_duration = get_combined_duration(duration_data, ci_threshold)
+    combined_duration = get_combined_duration(duration_data, ci_threshold, mode=ci_mode)
 
     duration_linkedin = duration_data["duration_computed"]
     duration_combined = combined_duration

@@ -54,14 +54,16 @@ def main():
         cv_result, bin_edges, bin_labels, plot_dir, theme, bin_var="gap_size"
     )
     visualize_binned_errors(
-        cv_result, bin_edges, bin_labels, plot_dir, theme, bin_var="ci_size_adjusted"
+        cv_result, bin_edges, bin_labels, plot_dir, theme, bin_var="double_long_side"
     )
     scatter_gap_ci(cv_result, plot_dir, theme, ci_col="ci_size_adjusted")
+    scatter_gap_ci(cv_result, plot_dir, theme, ci_col="double_long_side")
     scatter_gap_ci(cv_result, plot_dir, theme, ci_col="ci_size_raw")
 
     ci_summary = summarize_ci_thresholds(
         cv_result,
         out_path=DATA_DIR / "duration_estimator_ci_threshold_summary.csv",
+        ci_col="double_long_side",
     )
     print(ci_summary.to_string(index=False))
 

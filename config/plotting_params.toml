@@ -126,7 +126,8 @@ color = 6
 [duration_densities]
 use_model = false
 show_linkedin_and_model = true
-ci_threshold = 3.0
+ci_threshold = 1000
+ci_mode = "double_long_side"
 out_folder = "int_plots"
 out_name = "total_dur_densities"
 

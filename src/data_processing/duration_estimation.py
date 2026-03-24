@@ -584,6 +584,13 @@ def naive_estimator(df):
     return naive_duration, valid_mask
 
 
+def compute_double_long_side(df, *, estimate_col="duration_estimate_clipped"):
+    """Return twice the longer adjusted-CI side around ``estimate_col``."""
+    left_side = df[estimate_col] - df["lower_bound_adjusted"]
+    right_side = df["upper_bound_adjusted"] - df[estimate_col]
+    return 2 * pd.concat([left_side, right_side], axis=1).max(axis=1)
+
+
 def cross_validated_model_estimates(
     data,
     target_col_name,
@@ -640,6 +647,7 @@ def cross_validated_model_estimates(
         )
         fold_out["duration_computed"] = test_df[target_col_name]
         fold_out["gap_size"] = test_df["d_pba"] - test_df["d_acceptance"]
+        fold_out["double_long_side"] = compute_double_long_side(fold_out)
 
         naive_duration, naive_valid_mask = naive_estimator(test_df)
         acc_duration = acc_estimator(test_df)
@@ -688,8 +696,8 @@ def get_binned_errors(df, error_col, bin_col, bin_edges):
 
 def summarize_ci_thresholds(
     cv_result,
-    thresholds=(1.0, 1.5, 2.0),
-    ci_col="ci_size_adjusted",
+    thresholds=(1.0, 1.5, 2.0, 2.5, 3.0),
+    ci_col="double_long_side",
     estimate_col="duration_estimate_clipped",
     target_col="duration_computed",
     out_path=None,
@@ -849,6 +857,8 @@ def visualize_binned_errors(cv_result, bin_edges, bin_labels, out_dir, theme, bi
         xlabel = "Gap Size (Years)"
     elif bin_var == "ci_size_adjusted":
         xlabel = "CI Size (Years)"
+    elif bin_var == "double_long_side":
+        xlabel = "2 x Long CI Side (Years)"
     else:
         raise ValueError("Invalid bin_var")
 
@@ -879,11 +889,18 @@ def scatter_gap_ci(cv_result, plot_dir, theme, ci_col="ci_size_adjusted"):
     plt.close()
 
 
-def get_combined_duration(duration_data, ci_thereshold):
+def get_combined_duration(duration_data, ci_thereshold, mode="adjusted_ci"):
     duration_combined = duration_data["duration_estimate_clipped"].copy()
-    ci_mask = (duration_data["ci_size_adjusted"] > ci_thereshold) | duration_data[
-        "ci_size_adjusted"
-    ].isna()
+    if mode == "adjusted_ci":
+        ci_mask = (duration_data["ci_size_adjusted"] > ci_thereshold) | duration_data[
+            "ci_size_adjusted"
+        ].isna()
+    elif mode == "double_long_side":
+        double_long_side = compute_double_long_side(duration_data)
+        ci_mask = (double_long_side > ci_thereshold) | double_long_side.isna()
+    else:
+        raise ValueError(f"Unknown mode: {mode}")
+
     duration_combined[ci_mask] = pd.NA
     duration_combined[duration_data["duration_computed"].notna()] = duration_data[
         "duration_computed"
