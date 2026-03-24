@@ -123,6 +123,12 @@ color = 6
 "Institut für Theoretische Physik" = "Institut für Physik und Astronomie"
 "Zentrum für Astronomie und Astrophysik" = "Institut für Physik und Astronomie"
 
+[duration_densities]
+use_model = false
+show_linkedin_and_model = true
+ci_threshold = 3.0
+out_folder = "int_plots"
+out_name = "total_dur_densities"
 
 [acc_by_year]
 start_year = 2014

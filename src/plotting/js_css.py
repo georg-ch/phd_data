@@ -769,6 +769,78 @@ js_resize_sankey = r"""
 """
 
 
+js_resize_violin = r"""
+(function () {
+  var gd = document.getElementById("phd_plot");
+  if (!gd) return;
+
+  var RATIO = 16 / 9;
+  var MOBILE_BREAKPOINT = 540;
+
+  function clamp(x, lo, hi) {
+    if (x < lo) return lo;
+    if (x > hi) return hi;
+    return x;
+  }
+
+  function getWrapper() {
+    var wrap = null;
+    if (gd.closest) wrap = gd.closest(".plot-wrap");
+    return wrap || gd.parentElement || gd;
+  }
+
+  function resizeToWrapper() {
+    var wrap = getWrapper();
+    var w = wrap.clientWidth;
+    if (!w) return;
+
+    var isMobile = (w < MOBILE_BREAKPOINT);
+    var base = clamp(w / 52, 9, 18);
+    var tick = clamp(w / 65, 8, 15);
+    var title = clamp(w / 42, 10, 20);
+    var hover = clamp(w / 70, 9, 14);
+
+    var marginBottom = isMobile ? Math.round(base * 6.5) : Math.round(base * 4.8);
+    var marginLeft = isMobile ? 42 : 60;
+    var marginRight = isMobile ? 10 : 24;
+    var marginTop = 28;
+    var h = Math.round(w / RATIO) + marginBottom + marginTop;
+
+    Plotly.relayout(gd, {
+      width: w,
+      height: h,
+      "font.size": base,
+      "hoverlabel.font.size": hover,
+      "margin.l": marginLeft,
+      "margin.r": marginRight,
+      "margin.t": marginTop,
+      "margin.b": marginBottom,
+      "xaxis.tickfont.size": tick,
+      "yaxis.tickfont.size": tick,
+      "xaxis.title.font.size": title,
+      "yaxis.title.font.size": title,
+      "xaxis.tickangle": isMobile ? -25 : 0,
+      "xaxis.automargin": true,
+      "yaxis.automargin": true
+    });
+
+    Plotly.Plots.resize(gd);
+  }
+
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(function () { resizeToWrapper(); });
+    ro.observe(getWrapper());
+  }
+
+  window.addEventListener("load", resizeToWrapper);
+  window.addEventListener("orientationchange", resizeToWrapper);
+
+  setTimeout(resizeToWrapper, 50);
+  setTimeout(resizeToWrapper, 250);
+})();
+"""
+
+
 css = """
 <style>
 @media (max-width: 450px) {

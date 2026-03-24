@@ -569,6 +569,12 @@ def postprocess_predictions(
     return out
 
 
+def acc_estimator(df):
+    """Midpoint baseline in duration space using ``d_pba`` and ``d_acceptance``."""
+    d_acceptance = df["d_acceptance"]
+    return d_acceptance
+
+
 def naive_estimator(df):
     """Midpoint baseline in duration space using ``d_pba`` and ``d_acceptance``."""
     d_acceptance = df["d_acceptance"]
@@ -636,8 +642,10 @@ def cross_validated_model_estimates(
         fold_out["gap_size"] = test_df["d_pba"] - test_df["d_acceptance"]
 
         naive_duration, naive_valid_mask = naive_estimator(test_df)
+        acc_duration = acc_estimator(test_df)
         fold_out["naive_duration"] = naive_duration
         fold_out["naive_valid"] = naive_valid_mask
+        fold_out["acc_duration"] = acc_duration
         fold_outputs.append(fold_out)
 
     return pd.concat(fold_outputs).sort_index()
@@ -654,6 +662,9 @@ def calculate_errors(cv_result):
     ) ** 2
     cv_result["naive_error"] = (
         cv_result["naive_duration"] - cv_result["duration_computed"]
+    ) ** 2
+    cv_result["acc_error"] = (
+        cv_result["acc_duration"] - cv_result["duration_computed"]
     ) ** 2
     return cv_result
 
@@ -779,10 +790,12 @@ def visualize_binned_errors(cv_result, bin_edges, bin_labels, out_dir, theme, bi
     est = get_binned_errors(cv_result, "estimate_error", bin_var, bin_edges)
     est_c = get_binned_errors(cv_result, "estimate_error_clipped", bin_var, bin_edges)
     est_n = get_binned_errors(cv_result, "naive_error", bin_var, bin_edges)
+    est_a = get_binned_errors(cv_result, "acc_error", bin_var, bin_edges)
 
     mean_est = np.sqrt(np.mean(cv_result["estimate_error"]))
     mean_est_c = np.sqrt(np.mean(cv_result["estimate_error_clipped"]))
     mean_est_n = np.sqrt(np.mean(cv_result["naive_error"]))
+    mean_est_a = np.sqrt(np.mean(cv_result["acc_error"]))
 
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.plot(
@@ -803,6 +816,13 @@ def visualize_binned_errors(cv_result, bin_edges, bin_labels, out_dir, theme, bi
         label=f"Naive Estimate, mean: {mean_est_n:.4f}",
         marker="o",
     )
+    ax.plot(
+        bin_edges[:-1],
+        est_a[0],
+        label=f"Acceptance-based Estimate, mean: {mean_est_a:.4f}",
+        marker="o",
+    )
+
     frequencies = est[1]
     frequencies_frac = [f / sum(frequencies) for f in frequencies]
 
@@ -857,3 +877,15 @@ def scatter_gap_ci(cv_result, plot_dir, theme, ci_col="ci_size_adjusted"):
     theme.apply_transforms()
     plt.savefig(plot_dir / f"gap_size_vs_{ci_col}.png", dpi=200, bbox_inches="tight")
     plt.close()
+
+
+def get_combined_duration(duration_data, ci_thereshold):
+    duration_combined = duration_data["duration_estimate_clipped"].copy()
+    ci_mask = (duration_data["ci_size_adjusted"] > ci_thereshold) | duration_data[
+        "ci_size_adjusted"
+    ].isna()
+    duration_combined[ci_mask] = pd.NA
+    duration_combined[duration_data["duration_computed"].notna()] = duration_data[
+        "duration_computed"
+    ]
+    return duration_combined
