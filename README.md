@@ -46,3 +46,11 @@ The cleaned plotting input can be regenerated from:
 
 The cleaning pipeline expects raw input files in `data/` and lookup tables in
 `resources/`.
+
+To run the data cleaning pipeline, simply execute
+
+```bash
+python -m scripts.pdata_cleaning.generate_cleaned_table [file_name]
+```
+
+where `file_name` is expected to be an `.xls` file located in `data_dir/` (the suffix is optional in the script argument).

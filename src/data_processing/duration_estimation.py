@@ -327,6 +327,76 @@ def engineer_features(data):
     return data, feature_col_info
 
 
+def predict_start(
+    data,
+    target_col_name,
+    feature_col_info,
+    params_unc,
+    carry_cols,
+    out_path,
+    out_fname,
+    override_impossible=True,
+    naive_estimator_for_small_gap=(),
+):
+    labeled_data, cat_features = prepare_data_raw(
+        data, target_col_name, feature_col_info, dropna=("pba_val", "acceptance_val")
+    )
+
+    model_rmseunc = train_catboost(
+        labeled_data,
+        target_col_name,
+        cat_features,
+        params_unc,
+        loss_function="RMSEWithUncertainty",
+    )
+
+    data_for_pred = prepare_data_for_prediction(data, feature_col_info, target_col_name)
+    pred_mean_var = model_rmseunc.predict(
+        data_for_pred, prediction_type="RMSEWithUncertainty"
+    )
+    predicted_duration_unc = pred_mean_var[:, 0]  # mean
+    predicted_duration_var = pred_mean_var[:, 1]  # variance
+    out = postprocess_predictions(
+        data,
+        predicted_duration_unc,
+        predicted_duration_var,
+        override_impossible=override_impossible,
+        carry_cols=carry_cols,
+        naive_estimator_for_small_gap=naive_estimator_for_small_gap,
+    )
+
+    out_cols = carry_cols + [
+        "duration_estimate",
+        "duration_estimate_clipped",
+        "lower_bound_raw",
+        "upper_bound_raw",
+        "ci_size_raw",
+        "lower_bound_adjusted",
+        "upper_bound_adjusted",
+        "ci_size_adjusted",
+    ]
+    out = out[out_cols]
+
+    # estimates do not make sense for rows without a defense date, so set to NA to be sure
+    out.loc[
+        out["defense_date"].isna(),
+        [
+            "duration_estimate",
+            "duration_estimate_clipped",
+            "lower_bound_raw",
+            "upper_bound_raw",
+            "ci_size_raw",
+            "lower_bound_adjusted",
+            "upper_bound_adjusted",
+            "ci_size_adjusted",
+        ],
+    ] = pd.NA
+    # out.to_csv("data/duration_predictions.csv", index=False)
+    # out.to_csv(out_path / "duration_predictions.csv", index=False)
+    out_path = Path(out_path)
+    out.to_csv(out_path / out_fname, index=False)
+
+
 def predict_durations(
     data,
     target_col_name,
@@ -428,6 +498,7 @@ def find_parameters(
         N=N,
         ES=ES,
         loss_function=loss_function,
+        target_col_name=target_col_name,
     )
     iterations = catboost_cv(
         labeled_data,
@@ -443,6 +514,12 @@ def find_parameters(
         with open(f"{dump_folder}/best_params_{loss_function}.json", "w") as f:
             json.dump(params, f, indent=4)
     return params
+
+
+def postprocess_start(df, predicted_start_unc, predicted_start_var, carry_cols=None):
+    predicted_start_std = np.sqrt(predicted_start_var)
+    lower_bound_raw = predicted_start_unc - 1.96 * predicted_start_std
+    upper_bound_raw = predicted_start_unc + 1.96 * predicted_start_std
 
 
 def postprocess_predictions(
@@ -753,6 +830,40 @@ def summarize_ci_thresholds(
     return summary
 
 
+def find_parameters_and_predict_start(
+    data,
+    target_col_name,
+    feature_col_info,
+    orig_cols,
+    out_path,
+    out_fname,
+    N=10000,
+    ES=200,
+    dump_folder=None,
+    naive_estimator_for_small_gap=(),
+):
+    params_unc = find_parameters(
+        data,
+        target_col_name,
+        feature_col_info,
+        loss_function="RMSEWithUncertainty",
+        N=N,
+        ES=ES,
+        dump_folder=dump_folder,
+    )
+
+    predict_durations(
+        data,
+        target_col_name,
+        feature_col_info,
+        params_unc,
+        orig_cols,
+        out_path,
+        out_fname,
+        naive_estimator_for_small_gap=naive_estimator_for_small_gap,
+    )
+
+
 def find_parameters_and_predict(
     data,
     target_col_name,
@@ -906,3 +1017,65 @@ def get_combined_duration(duration_data, ci_thereshold, mode="adjusted_ci"):
         "duration_computed"
     ]
     return duration_combined
+
+
+def get_datescore(year, month):
+    return year + (month - 1) / 12 - 2000
+
+
+def get_yearmonth(datescore):
+    return 2000 + int(datescore), int((datescore - int(datescore)) * 12) + 1
+
+
+def engineer_features_startdate(data):
+    data = data.copy()
+
+    start_val = get_datescore(data["start_year"], data["start_month"])
+    data["start_val"] = start_val
+
+    acceptance_month = pd.to_datetime(data["acceptance_date"], errors="coerce").dt.month
+    acceptance_val = get_datescore(data["acceptance_year"], acceptance_month)
+    data["acceptance_val"] = acceptance_val
+
+    pba_month = pd.to_datetime(data["pba_date"], errors="coerce").dt.month
+    pba_val = get_datescore(data["pba_year"], pba_month)
+    data["pba_val"] = pba_val
+
+    defense_month = pd.to_datetime(data["defense_date"], errors="coerce").dt.month
+    defense_val = get_datescore(data["defense_year"], defense_month)
+    data["defense_val"] = defense_val
+
+    data["age_at_acceptance"] = data["acceptance_year"] - data["birth_year"]
+    data["age_at_pba"] = data["pba_year"] - data["birth_year"]
+
+    data["gap"] = pba_val - acceptance_val
+
+    data["d_acceptance"] = defense_val - acceptance_val
+    data["d_pba"] = defense_val - pba_val
+
+    data["mid_ap"] = (acceptance_val + pba_val) / 2
+    data["mid_dp"] = (defense_val + pba_val) / 2
+    data["mid_da"] = (defense_val + acceptance_val) / 2
+
+    data["rel_da"] = (defense_val - acceptance_val) / (defense_val - pba_val + 0.1)
+    data["rel_ap"] = (acceptance_val - pba_val) / (defense_val - pba_val + 0.1)
+
+    feature_col_info = [
+        ("rel_ap", False),
+        ("rel_da", False),
+        ("mid_ap", False),
+        ("mid_dp", False),
+        ("mid_da", False),
+        ("d_acceptance", False),
+        ("d_pba", False),
+        ("pba_val", False),
+        ("acceptance_val", False),
+        ("defense_val", False),
+        ("gap", False),  # important for uncertainty model
+        ("age_at_acceptance", False),
+        ("age_at_pba", False),
+        ("institute_name", True),
+        ("has_german_cship", True),
+        ("pba_state", True),
+    ]
+    return data, feature_col_info
