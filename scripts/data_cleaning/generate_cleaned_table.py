@@ -31,7 +31,7 @@ def main(input_file: str):
     df_excel.to_csv(csv_path, index=False)
 
     df = pd.read_csv(
-        DATA_DIR / "20260113_PDB.csv",
+        csv_path,
         dtype={
             "Betr_Kostst": str,
             "Gutacht1_Kostst": str,
