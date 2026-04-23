@@ -290,7 +290,11 @@ def within_months_of_signed(
     checked_total_months = checked_years * 12 + checked_months - 1
     ref_total_months = ref_years * 12 + ref_months - 1
 
-    return (checked_total_months >= ref_total_months + months).fillna(False)
+    result = pd.Series(False, index=data.index, dtype="boolean")
+    result.loc[mask] = (
+        checked_total_months.loc[mask] >= ref_total_months.loc[mask] + months
+    )
+    return result
 
 
 def check_start_after_acceptance(
