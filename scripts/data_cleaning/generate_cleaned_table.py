@@ -12,14 +12,13 @@ def main(input_file: str):
 
     if input_path.suffix:
         stem = input_path.with_suffix("")
-        excel_path = input_path
+        excel_path = input_path if input_path.is_absolute() else DATA_DIR / input_path
     else:
         stem = DATA_DIR / input_path
         excel_path = stem.with_suffix(".xls")
 
     csv_path = stem.with_suffix(".csv")
 
-    # fname = DATA_DIR / "20260113_PDB"
     xls = pd.ExcelFile(excel_path)
 
     if len(xls.sheet_names) != 1:
