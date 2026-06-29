@@ -209,7 +209,7 @@ def start_and_acceptance(joined_data, mode="official", months_soft=12):
 
 
 def start_and_pba(joined_data, months=12):
-    """Drop start dates that lie too far after the PBA date."""
+    """Drop start dates that lie too far before the PBA date."""
     mask_more_than12_before_pba = within_months_of_signed(
         joined_data, "pba_year", "pba_month", "start_year", "start_month", months=months
     )

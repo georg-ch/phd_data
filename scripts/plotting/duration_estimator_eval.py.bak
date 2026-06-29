@@ -1,0 +1,190 @@
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import KFold
+import json
+
+from scripts.paths import DATA_DIR
+from src.data_processing.duration_estimation import (
+    engineer_features,
+    prepare_data_raw,
+    prepare_data_for_prediction,
+    train_catboost_combined,
+    postprocess_predictions,
+)
+from src.data_loading.load_data import load_data
+
+import matplotlib.pyplot as plt
+
+
+def naive_estimator(df):
+    # acceptance_date = pd.to_datetime(
+    #     df["acceptance_date"], errors="coerce", format="%d-%m-%Y"
+    # )
+    # pba_date = pd.to_datetime(df["pba_date"], errors="coerce", format="%d-%m-%Y")
+    # defense_date = pd.to_datetime(
+    #     df["defense_date"], errors="coerce", format="%d-%m-%Y"
+    # )
+    d_acceptance = df["d_acceptance"]
+    d_pba = df["d_pba"]
+    # midpoint_date = (pba_date + acceptance_date) / 2
+
+    # naive_duration = (defense_date - midpoint_date).dt.days / 365
+    naive_duration = (d_pba + d_acceptance) / 2
+
+    valid_mask = d_acceptance.notna() & d_pba.notna()
+
+    return naive_duration, valid_mask
+
+
+def cross_validated_model_estimates(
+    data,
+    target_col_name,
+    params,
+    params_unc,
+    n_splits=5,
+    random_state=42,
+    override_impossible=True,
+):
+    """Create out-of-fold model estimates with the same metrics as prediction output."""
+    data_eng, feature_col_info = engineer_features(data)
+    labeled_data, cat_features = prepare_data_raw(
+        data_eng, target_col_name, feature_col_info, dropna=("d_pba", "d_acceptance")
+    )
+
+    kf = KFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+    fold_outputs = []
+
+    for train_idx, test_idx in kf.split(labeled_data):
+        train_df = labeled_data.iloc[train_idx].copy()
+        test_df = labeled_data.iloc[test_idx].copy()
+
+        model_rmse = train_catboost_combined(
+            train_df, target_col_name, cat_features, params, loss_function="RMSE"
+        )
+        model_rmseunc = train_catboost_combined(
+            train_df,
+            target_col_name,
+            cat_features,
+            params_unc,
+            loss_function="RMSEWithUncertainty",
+        )
+
+        X_test = prepare_data_for_prediction(test_df, feature_col_info, target_col_name)
+        pred_rmse = model_rmse.predict(X_test, prediction_type="RawFormulaVal")
+        pred_mean_var = model_rmseunc.predict(
+            X_test, prediction_type="RMSEWithUncertainty"
+        )
+
+        fold_out = postprocess_predictions(
+            test_df,
+            predicted_duration=pred_rmse,
+            predicted_duration_unc=pred_mean_var[:, 0],
+            predicted_duration_var=pred_mean_var[:, 1],
+            override_impossible=override_impossible,
+            naive_estimator_for_small_gap=(
+                "duration_estimate",
+                "duration_estimate_with_uncertainty",
+                "duration_estimate_clipped",
+                "duration_estimate_with_uncertainty_clipped",
+            ),
+        )
+        fold_out["duration_computed"] = test_df[target_col_name]
+        fold_out["gap_size"] = test_df["d_pba"] - test_df["d_acceptance"]
+
+        naive_duration, naive_valid_mask = naive_estimator(test_df)
+        fold_out["naive_duration"] = naive_duration
+        fold_out["naive_valid"] = naive_valid_mask
+        fold_outputs.append(fold_out)
+
+    return pd.concat(fold_outputs).sort_index()
+
+
+def calculate_errors(cv_result):
+    cv_result = cv_result.copy()
+    cv_result["estimate_error"] = (
+        cv_result["duration_estimate"] - cv_result["duration_computed"]
+    ) ** 2
+    cv_result["estimate_error_clipped"] = (
+        cv_result["duration_estimate_clipped"] - cv_result["duration_computed"]
+    ) ** 2
+    cv_result["estimate_error_with_uncertainty"] = (
+        cv_result["duration_estimate_with_uncertainty_clipped"]
+        - cv_result["duration_computed"]
+    ) ** 2
+    cv_result["naive_error"] = (
+        cv_result["naive_duration"] - cv_result["duration_computed"]
+    ) ** 2
+    return cv_result
+
+
+def compare_estimators(
+    df, naive_estimate, valid_mask, col_name, ci_col_name=None, ci_threshold=None
+):
+    if ci_threshold is not None and ci_col_name is not None:
+        valid_mask = valid_mask & (df[ci_col_name] <= ci_threshold)
+
+
+def main():
+    # duration_data = pd.read_csv(DATA_DIR / "duration_predictions.csv")
+    data = load_data(DATA_DIR / "clean_data.csv", DATA_DIR / "cleaned_data_dtypes.json")
+    with open(DATA_DIR / "best_params_RMSE.json", "r") as f:
+        params = json.load(f)
+    with open(DATA_DIR / "best_params_RMSEWithUncertainty.json", "r") as f:
+        params_unc = json.load(f)
+
+    cv_result = cross_validated_model_estimates(
+        data, "duration_computed", params, params_unc
+    )
+    cv_result = calculate_errors(cv_result)
+
+    bin_edges = [0, 0.5, 1, 2, 3, 4, 5, 6, 7, 8, 10, 15]
+
+    def get_binned_errors(df, error_col, gap_col, bin_edges):
+        bins = [[] for _ in range(len(bin_edges) - 1)]
+        for row in df.itertuples():
+            for i, (low, high) in enumerate(zip(bin_edges[:-1], bin_edges[1:])):
+                if low <= getattr(row, gap_col) < high:
+                    bins[i].append(getattr(row, error_col))
+                    break
+        error_means = []
+        error_stds = []
+        for bin in bins:
+            bin_array = np.array(bin)
+            error_means.append(np.sqrt(np.mean(bin_array)))
+            error_stds.append(np.sqrt(np.var(bin_array)))
+        return error_means, error_stds
+
+    est = get_binned_errors(cv_result, "estimate_error", "gap_size", bin_edges)
+    est_c = get_binned_errors(
+        cv_result, "estimate_error_clipped", "gap_size", bin_edges
+    )
+    est_u = get_binned_errors(
+        cv_result, "estimate_error_with_uncertainty", "gap_size", bin_edges
+    )
+
+    est_n = get_binned_errors(cv_result, "naive_error", "gap_size", bin_edges)
+
+    mean_est = np.sqrt(np.mean(cv_result["estimate_error"]))
+    mean_est_c = np.sqrt(np.mean(cv_result["estimate_error_clipped"]))
+    mean_est_u = np.sqrt(np.mean(cv_result["estimate_error_with_uncertainty"]))
+    men_est_n = np.sqrt(np.mean(cv_result["naive_error"]))
+    print(f"Overall RMSE - Model Estimate: {mean_est:.4f}")
+    print(f"Overall RMSE - Clipped Estimate: {mean_est_c:.4f}")
+    print(f"Overall RMSE - Estimate with Uncertainty: {mean_est_u:.4f}")
+    print(f"Overall RMSE - Naive Estimate: {men_est_n:.4f}")
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(bin_edges[:-1], est[0], label="Model Estimate", marker="o")
+    plt.plot(bin_edges[:-1], est_c[0], label="Clipped Estimate", marker="o")
+    plt.plot(bin_edges[:-1], est_u[0], label="Estimate with Uncertainty", marker="o")
+    plt.plot(bin_edges[:-1], est_n[0], label="Naive Estimate", marker="o")
+    plt.legend()
+    plt.show()
+
+    # comparisons:
+    # 1) all naive to all duration_estimate, duration_estimate_clipped, duration_estimate_with_uncertainty
+    # 2) same three, but only where adjusted CI is <=1, <=1.5, <=2
+
+
+if __name__ == "__main__":
+    main()

@@ -13,6 +13,13 @@ from scripts.plotting.p_gender_defense_by_year import (
 from scripts.plotting.p_sankey_institutes import main as sankey_institutes_main
 from scripts.plotting.p_sankey_faculties import main as sankey_faculties_main
 from scripts.plotting.p_region_matrix_barplot import main as region_matrix_barplot_main
+from scripts.plotting.p_duration_densities import main as duration_densities_main
+from scripts.plotting.p_duration_densities_from_start_anchor import (
+    main as duration_densities_from_start_anchor_main,
+)
+from scripts.plotting.p_duration_densities_from_start_defense import (
+    main as duration_densities_from_start_defense_main,
+)
 from scripts.plotting.p_pba_category_pie import main as pba_category_pie_main
 from scripts.plotting.p_pba_category_by_year import main as pba_category_by_year_main
 
@@ -31,6 +38,9 @@ PLOT_RUNNERS = [
     pba_state_pie_main,
     cship_pie_main,
     region_matrix_barplot_main,
+    duration_densities_main,
+    duration_densities_from_start_anchor_main,
+    duration_densities_from_start_defense_main,
 ]
 
 

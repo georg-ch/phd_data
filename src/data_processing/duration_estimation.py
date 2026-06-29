@@ -338,8 +338,16 @@ def predict_start(
     override_impossible=True,
     naive_estimator_for_small_gap=(),
 ):
+    """Train the uncertainty model, predict start for all rows, and write output.
+
+    This is the production prediction entrypoint.
+
+    The fitted model is ``RMSEWithUncertainty``. Its mean prediction is passed
+    into ``postprocess_predictions``, which applies feasibility clipping and the
+    optional small-gap midpoint override before the final CSV is written.
+    """
     labeled_data, cat_features = prepare_data_raw(
-        data, target_col_name, feature_col_info, dropna=("pba_val", "acceptance_val")
+        data, target_col_name, feature_col_info, dropna=("d_pba", "d_acceptance")
     )
 
     model_rmseunc = train_catboost(
@@ -354,41 +362,58 @@ def predict_start(
     pred_mean_var = model_rmseunc.predict(
         data_for_pred, prediction_type="RMSEWithUncertainty"
     )
-    predicted_duration_unc = pred_mean_var[:, 0]  # mean
-    predicted_duration_var = pred_mean_var[:, 1]  # variance
-    out = postprocess_predictions(
+    predicted_start_unc = pred_mean_var[:, 0]  # mean
+    predicted_start_var = pred_mean_var[:, 1]  # variance
+
+    # here, we want to postprocess_start instead, and first or in this step, convert back to proper start dates.
+    # also, change output cols etc.
+    #
+    out = postprocess_start(
         data,
-        predicted_duration_unc,
-        predicted_duration_var,
+        predicted_start_unc,
+        predicted_start_var,
         override_impossible=override_impossible,
         carry_cols=carry_cols,
         naive_estimator_for_small_gap=naive_estimator_for_small_gap,
     )
 
     out_cols = carry_cols + [
-        "duration_estimate",
-        "duration_estimate_clipped",
-        "lower_bound_raw",
-        "upper_bound_raw",
-        "ci_size_raw",
-        "lower_bound_adjusted",
-        "upper_bound_adjusted",
-        "ci_size_adjusted",
+        "duration_estimate_s",
+        "duration_estimate_clipped_s",
+        "lower_bound_raw_s",
+        "upper_bound_raw_s",
+        "ci_size_raw_s",
+        "lower_bound_adjusted_s",
+        "upper_bound_adjusted_s",
+        "ci_size_adjusted_s",
+        "start_year_est",
+        "start_month_est",
+        "start_year_est_clipped",
+        "start_month_est_clipped",
+        "start_year_lower_raw",
+        "start_month_lower_raw",
+        "start_year_upper_raw",
+        "start_month_upper_raw",
+        "start_year_lower_adj",
+        "start_month_lower_adj",
+        "start_year_upper_adj",
+        "start_month_upper_adj",
     ]
     out = out[out_cols]
 
     # estimates do not make sense for rows without a defense date, so set to NA to be sure
+    # here, only do this for durations. Also, make sure earlier that we do not compute durations where defense is na.
     out.loc[
         out["defense_date"].isna(),
         [
-            "duration_estimate",
-            "duration_estimate_clipped",
-            "lower_bound_raw",
-            "upper_bound_raw",
-            "ci_size_raw",
-            "lower_bound_adjusted",
-            "upper_bound_adjusted",
-            "ci_size_adjusted",
+            "duration_estimate_s",
+            "duration_estimate_clipped_s",
+            "lower_bound_raw_s",
+            "upper_bound_raw_s",
+            "ci_size_raw_s",
+            "lower_bound_adjusted_s",
+            "upper_bound_adjusted_s",
+            "ci_size_adjusted_s",
         ],
     ] = pd.NA
     # out.to_csv("data/duration_predictions.csv", index=False)
@@ -485,6 +510,7 @@ def find_parameters(
     N=10000,
     ES=200,
     dump_folder=None,
+    dump_fname=None,
 ):
     """Tune hyperparameters and choose the final iteration count."""
     labeled_data, cat_features = prepare_data_raw(
@@ -511,15 +537,147 @@ def find_parameters(
     params["iterations"] = iterations
 
     if dump_folder:
-        with open(f"{dump_folder}/best_params_{loss_function}.json", "w") as f:
+        out_fname = dump_fname or f"best_params_{loss_function}.json"
+        with open(Path(dump_folder) / out_fname, "w") as f:
             json.dump(params, f, indent=4)
     return params
 
 
-def postprocess_start(df, predicted_start_unc, predicted_start_var, carry_cols=None):
+def postprocess_start(
+    df,
+    predicted_start_unc,
+    predicted_start_var,
+    carry_cols=None,
+    naive_estimator_for_small_gap=(),
+    override_impossible=True,
+):
     predicted_start_std = np.sqrt(predicted_start_var)
     lower_bound_raw = predicted_start_unc - 1.96 * predicted_start_std
     upper_bound_raw = predicted_start_unc + 1.96 * predicted_start_std
+
+    # here, min and max should be analogous to start-preprocessing.
+    # max_start: acceptance_val (cannot start after acceptance)
+    # min_start: pba_val, but with slack like in preprocessing (acceptable if up to 12 months prior).
+    #
+    max_start = df["acceptance_val"] + 1 / 12
+    min_start = df["pba_val"] - 13 / 12
+
+    inconsistency_mask = max_start < min_start
+    max_start = max_start.copy()
+    min_start = min_start.copy()
+    max_start[inconsistency_mask] = 1000
+    min_start[inconsistency_mask] = -1000
+
+    start_estimate = pd.Series(predicted_start_unc, index=df.index, dtype="Float64")
+    start_estimate_clipped = start_estimate.clip(lower=min_start, upper=max_start)
+
+    has_acceptance = df["acceptance_val"].notna()
+    has_pba = df["pba_val"].notna()
+
+    lower_bound_adjusted = pd.Series(lower_bound_raw, index=df.index).copy()
+    upper_bound_adjusted = pd.Series(upper_bound_raw, index=df.index).copy()
+
+    lower_bound_adjusted[has_pba] = np.maximum(
+        lower_bound_adjusted[has_pba],
+        min_start[has_pba],
+    )
+    upper_bound_adjusted[has_acceptance] = np.minimum(
+        upper_bound_adjusted[has_acceptance],
+        max_start[has_acceptance],
+    )
+    if not carry_cols:
+        out = pd.DataFrame(index=df.index)
+    else:
+        out = df.loc[:, carry_cols].copy()
+
+    max_duration = df["defense_val"] - min_start
+    min_duration = df["defense_val"] - max_start
+
+    lower_bound_raw_dur = df["defense_val"] - upper_bound_raw
+    lower_bound_adjusted_dur = df["defense_val"] - upper_bound_adjusted
+    upper_bound_raw_dur = df["defense_val"] - lower_bound_raw
+    upper_bound_adjusted_dur = df["defense_val"] - lower_bound_adjusted
+
+    if override_impossible:
+        impossible_mask = upper_bound_adjusted_dur < lower_bound_adjusted_dur
+        small_diff_mask = (df["acceptance_val"] - df["pba_val"]) <= 0.5
+        override_mask = impossible_mask & small_diff_mask
+
+        fallback_min_duration = df["d_acceptance"] - 1 / 12
+        fallback_max_duration = df["d_pba"] + 1 / 12
+        midpoint_duration = (fallback_max_duration + fallback_min_duration) / 2
+        midpoint_start = df["defense_val"] - midpoint_duration
+        start_estimate.loc[override_mask] = midpoint_start[override_mask]
+        start_estimate_clipped.loc[override_mask] = midpoint_start[override_mask]
+        lower_bound_adjusted.loc[override_mask] = min_start[override_mask]
+        upper_bound_adjusted.loc[override_mask] = max_start[override_mask]
+        lower_bound_adjusted_dur.loc[override_mask] = min_duration[override_mask]
+        upper_bound_adjusted_dur.loc[override_mask] = max_duration[override_mask]
+
+        lower_bound_adjusted_dur.loc[impossible_mask & ~small_diff_mask] = pd.NA
+        upper_bound_adjusted_dur.loc[impossible_mask & ~small_diff_mask] = pd.NA
+
+        impossible_mask = upper_bound_adjusted_dur < lower_bound_adjusted_dur
+        lower_bound_adjusted_dur.loc[impossible_mask] = lower_bound_raw_dur[
+            impossible_mask
+        ]
+        upper_bound_adjusted_dur.loc[impossible_mask] = upper_bound_raw_dur[
+            impossible_mask
+        ]
+
+    out["lower_bound_raw_s"] = lower_bound_raw_dur
+    out["upper_bound_raw_s"] = upper_bound_raw_dur
+    out["ci_size_raw_s"] = out["upper_bound_raw_s"] - out["lower_bound_raw_s"]
+    out["lower_bound_adjusted_s"] = lower_bound_adjusted_dur
+    out["upper_bound_adjusted_s"] = upper_bound_adjusted_dur
+    out["ci_size_adjusted_s"] = (
+        out["upper_bound_adjusted_s"] - out["lower_bound_adjusted_s"]
+    )
+
+    if naive_estimator_for_small_gap:
+        small_diff_mask = (df["acceptance_val"] - df["pba_val"]) <= 0.5
+        small_diff_mask &= (
+            ~inconsistency_mask
+        )  # no touching the inconsistent intervals.
+        fallback_min_duration = df["d_acceptance"] - 1 / 12
+        fallback_max_duration = df["d_pba"] + 1 / 12
+        midpoint_duration = (fallback_max_duration + fallback_min_duration) / 2
+        midpoint_start = df["defense_val"] - midpoint_duration
+        start_estimate.loc[small_diff_mask] = midpoint_start[small_diff_mask]
+        start_estimate_clipped.loc[small_diff_mask] = midpoint_start[small_diff_mask]
+
+    out["duration_estimate_s"] = df["defense_val"] - start_estimate
+    out["duration_estimate_clipped_s"] = df["defense_val"] - start_estimate_clipped
+
+    # now, transform back into dates the following: start_date, start_date_clipped (make),
+    # start_date_lower_raw, start_date_upper_raw, start_date_lower_adjusted, start_date_upper_adjusted
+
+    start_year_est, start_month_est = get_yearmonth(start_estimate)
+    start_year_est_clipped, start_month_est_clipped = get_yearmonth(
+        start_estimate_clipped
+    )
+    start_year_lower_raw, start_month_lower_raw = get_yearmonth(lower_bound_raw)
+    start_year_upper_raw, start_month_upper_raw = get_yearmonth(upper_bound_raw)
+    start_year_lower_adj, start_month_lower_adj = get_yearmonth(lower_bound_adjusted)
+    start_year_upper_adj, start_month_upper_adj = get_yearmonth(upper_bound_adjusted)
+
+    out["start_year_est"] = start_year_est
+    out["start_month_est"] = start_month_est
+    out["start_year_est_clipped"] = start_year_est_clipped
+    out["start_month_est_clipped"] = start_month_est_clipped
+    out["start_year_lower_raw"] = start_year_lower_raw
+    out["start_month_lower_raw"] = start_month_lower_raw
+    out["start_year_upper_raw"] = start_year_upper_raw
+    out["start_month_upper_raw"] = start_month_upper_raw
+    out["start_year_lower_adj"] = start_year_lower_adj
+    out["start_month_lower_adj"] = start_month_lower_adj
+    out["start_year_upper_adj"] = start_year_upper_adj
+    out["start_month_upper_adj"] = start_month_upper_adj
+
+    return out
+
+    # here: compute duration estimate and durations CIs
+    # Then, go back to date space and compute start date and CIs.
 
 
 def postprocess_predictions(
@@ -840,6 +998,7 @@ def find_parameters_and_predict_start(
     N=10000,
     ES=200,
     dump_folder=None,
+    dump_fname=None,
     naive_estimator_for_small_gap=(),
 ):
     params_unc = find_parameters(
@@ -850,9 +1009,10 @@ def find_parameters_and_predict_start(
         N=N,
         ES=ES,
         dump_folder=dump_folder,
+        dump_fname=dump_fname,
     )
 
-    predict_durations(
+    predict_start(
         data,
         target_col_name,
         feature_col_info,
@@ -1023,25 +1183,44 @@ def get_datescore(year, month):
     return year + (month - 1) / 12 - 2000
 
 
+# def get_yearmonth(datescore):
+#     return 2000 + int(datescore), int((datescore - int(datescore)) * 12) + 1
 def get_yearmonth(datescore):
-    return 2000 + int(datescore), int((datescore - int(datescore)) * 12) + 1
+    ds = pd.to_numeric(pd.Series(datescore), errors="coerce")
+    whole = np.floor(ds).astype("Int64")
+    year = 2000 + whole
+    month = ((ds - whole) * 12).round().astype("Int64") + 1
+    # guard against rounding overflow (month=13)
+    overflow = month == 13
+    month[overflow] = 1
+    year[overflow] = year[overflow] + 1
+    if np.isscalar(datescore):
+        return (
+            int(year.iloc[0]) if pd.notna(year.iloc[0]) else pd.NA,
+            int(month.iloc[0]) if pd.notna(month.iloc[0]) else pd.NA,
+        )
+    return year, month
 
 
-def engineer_features_startdate(data):
+def engineer_features_startdate(data, feature_set="defense"):
     data = data.copy()
 
     start_val = get_datescore(data["start_year"], data["start_month"])
     data["start_val"] = start_val
 
-    acceptance_month = pd.to_datetime(data["acceptance_date"], errors="coerce").dt.month
+    acceptance_month = pd.to_datetime(
+        data["acceptance_date"], errors="coerce", dayfirst=True
+    ).dt.month
     acceptance_val = get_datescore(data["acceptance_year"], acceptance_month)
     data["acceptance_val"] = acceptance_val
 
-    pba_month = pd.to_datetime(data["pba_date"], errors="coerce").dt.month
+    pba_month = pd.to_datetime(data["pba_date"], errors="coerce", dayfirst=True).dt.month
     pba_val = get_datescore(data["pba_year"], pba_month)
     data["pba_val"] = pba_val
 
-    defense_month = pd.to_datetime(data["defense_date"], errors="coerce").dt.month
+    defense_month = pd.to_datetime(
+        data["defense_date"], errors="coerce", dayfirst=True
+    ).dt.month
     defense_val = get_datescore(data["defense_year"], defense_month)
     data["defense_val"] = defense_val
 
@@ -1060,22 +1239,39 @@ def engineer_features_startdate(data):
     data["rel_da"] = (defense_val - acceptance_val) / (defense_val - pba_val + 0.1)
     data["rel_ap"] = (acceptance_val - pba_val) / (defense_val - pba_val + 0.1)
 
-    feature_col_info = [
-        ("rel_ap", False),
-        ("rel_da", False),
-        ("mid_ap", False),
-        ("mid_dp", False),
-        ("mid_da", False),
-        ("d_acceptance", False),
-        ("d_pba", False),
-        ("pba_val", False),
-        ("acceptance_val", False),
-        ("defense_val", False),
-        ("gap", False),  # important for uncertainty model
-        ("age_at_acceptance", False),
-        ("age_at_pba", False),
-        ("institute_name", True),
-        ("has_german_cship", True),
-        ("pba_state", True),
-    ]
+    feature_sets = {
+        "defense": [
+            ("rel_ap", False),
+            ("rel_da", False),
+            ("mid_ap", False),
+            ("mid_dp", False),
+            ("mid_da", False),
+            ("d_acceptance", False),
+            ("d_pba", False),
+            ("pba_val", False),
+            ("acceptance_val", False),
+            ("defense_val", False),
+            ("gap", False),
+            ("age_at_acceptance", False),
+            ("age_at_pba", False),
+            ("institute_name", True),
+            ("has_german_cship", True),
+            ("pba_state", True),
+        ],
+        "anchor": [
+            ("mid_ap", False),
+            ("pba_val", False),
+            ("acceptance_val", False),
+            ("gap", False),
+            ("age_at_acceptance", False),
+            ("age_at_pba", False),
+            ("institute_name", True),
+            ("has_german_cship", True),
+            ("pba_state", True),
+        ],
+    }
+    if feature_set not in feature_sets:
+        raise ValueError(f"Unknown feature_set: {feature_set}")
+
+    feature_col_info = feature_sets[feature_set]
     return data, feature_col_info

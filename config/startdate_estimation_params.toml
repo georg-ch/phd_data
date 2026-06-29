@@ -1,0 +1,47 @@
+target_col_name = "start_val"
+feature_set = "anchor"
+out_fname = "start_predictions_{feature_set}.csv"
+out_path = "data"
+eval_plot_dir = "data/start_eval_plots"
+orig_cols = [
+  "pagination_nr",
+  "faculty",
+  "lecode",
+  "institute_name",
+  "gender",
+  "phd_subject",
+  "pba_date",
+  "pba_year",
+  "pba_month",
+  "acceptance_date",
+  "acceptance_year",
+  "acceptance_month",
+  "defense_date",
+  "defense_year",
+  "defense_month",
+  "start_year",
+  "start_month",
+  "end_year",
+  "end_month",
+  "start_year_raw",
+  "start_month_raw",
+  "end_year_raw",
+  "end_month_raw",
+  "start_month_guessed",
+  "duration_linkedin",
+  "duration_computed",
+  "start_val",
+  "pba_val",
+  "acceptance_val",
+  "defense_val",
+  "d_pba",
+  "d_acceptance",
+  "gap",
+  "grade_justnum",
+  "pba_grade_justnum",
+  "birth_year",
+  "has_eu_cship",
+  "has_german_cship",
+  "born_in_eu",
+]
+naive_est_cols = ["duration_estimate_s", "duration_estimate_clipped_s"]

@@ -131,6 +131,30 @@ ci_mode = "double_long_side"
 out_folder = "int_plots"
 out_name = "total_dur_densities"
 
+[start_densities_anchor]
+out_folder = "int_plots"
+out_name = "start_densities_anchor"
+
+[start_densities_defense]
+out_folder = "int_plots"
+out_name = "start_densities_defense"
+
+[duration_densities_from_start_anchor]
+use_model = false
+show_linkedin_and_model = true
+ci_threshold = 1000
+ci_mode = "double_long_side"
+out_folder = "int_plots"
+out_name = "duration_densities_from_start_anchor"
+
+[duration_densities_from_start_defense]
+use_model = false
+show_linkedin_and_model = true
+ci_threshold = 1000
+ci_mode = "double_long_side"
+out_folder = "int_plots"
+out_name = "duration_densities_from_start_defense"
+
 [acc_by_year]
 start_year = 2014
 end_year = 2025

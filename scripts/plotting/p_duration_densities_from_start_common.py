@@ -1,11 +1,12 @@
-from src.data_loading.load_data import load_data
+from __future__ import annotations
+
+import pandas as pd
+import plotly.graph_objects as go
+
+from scripts.paths import DATA_DIR
 from src.plotting.distribution_similarity import compare_distribution_similarity
 from src.plotting.plot_config import load_plot_config
 from src.plotting.plotting_export import write_html
-from scripts.paths import DATA_DIR
-import pandas as pd
-import plotly.graph_objects as go
-from src.data_processing.duration_estimation import get_combined_duration
 
 
 def duration_years_from_dates(later: pd.Series, earlier: pd.Series) -> pd.Series:
@@ -25,7 +26,6 @@ def add_violin_trace(
     width: float,
     opacity: float,
 ) -> None:
-    """Add one styled violin trace centered on a numeric x-position."""
     clean = values.dropna()
     fig.add_trace(
         go.Violin(
@@ -57,7 +57,6 @@ def add_box_trace(
     width: float,
     line_width: float,
 ) -> None:
-    """Overlay a non-hoverable box trace so median and mean remain visible."""
     clean = values.dropna()
     if clean.empty:
         return
@@ -79,37 +78,69 @@ def add_box_trace(
     )
 
 
-def main():
-    """Write a violin-plot comparison of duration distributions to the configured HTML path."""
-    params, params_global, out_path = load_plot_config("duration_densities")
+def _compute_double_long_side_from_start(start_data: pd.DataFrame) -> pd.Series:
+    left_side = (
+        start_data["duration_estimate_clipped_s"] - start_data["lower_bound_adjusted_s"]
+    )
+    right_side = (
+        start_data["upper_bound_adjusted_s"] - start_data["duration_estimate_clipped_s"]
+    )
+    return 2 * pd.concat([left_side, right_side], axis=1).max(axis=1)
 
+
+def get_combined_start_duration(
+    start_data: pd.DataFrame, ci_threshold: float, mode: str = "adjusted_ci"
+) -> pd.Series:
+    duration_combined = start_data["duration_estimate_clipped_s"].copy()
+    if mode == "adjusted_ci":
+        ci_mask = (start_data["ci_size_adjusted_s"] > ci_threshold) | start_data[
+            "ci_size_adjusted_s"
+        ].isna()
+    elif mode == "double_long_side":
+        double_long_side = _compute_double_long_side_from_start(start_data)
+        ci_mask = (double_long_side > ci_threshold) | double_long_side.isna()
+    else:
+        raise ValueError(f"Unknown mode: {mode}")
+
+    duration_combined[ci_mask] = pd.NA
+    duration_combined[start_data["duration_computed"].notna()] = start_data[
+        "duration_computed"
+    ]
+    return duration_combined
+
+
+def build_duration_densities_from_start(feature_set: str) -> None:
+    params, params_global, out_path = load_plot_config(
+        f"duration_densities_from_start_{feature_set}"
+    )
     color_cycle = params_global["color_cycle"]
 
-    use_model = params["use_model"]
     show_linkedin_and_model = params["show_linkedin_and_model"]
+    use_model = params["use_model"]
     ci_threshold = params["ci_threshold"]
     ci_mode = params["ci_mode"]
 
-    data = load_data(DATA_DIR / "clean_data.csv", DATA_DIR / "cleaned_data_dtypes.json")
-    duration_data = pd.read_csv(DATA_DIR / "duration_predictions.csv")
-    combined_duration = get_combined_duration(duration_data, ci_threshold, mode=ci_mode)
+    start_data = pd.read_csv(DATA_DIR / f"start_predictions_{feature_set}.csv")
+    combined_duration = get_combined_start_duration(
+        start_data, ci_threshold, mode=ci_mode
+    )
 
-    duration_linkedin = duration_data["duration_computed"]
+    duration_linkedin = start_data["duration_computed"]
     duration_combined = combined_duration
-    combined_label = f"LinkedIn + Modell (CI <= {ci_threshold})"
+    combined_label = f"LinkedIn + Startmodell (CI <= {ci_threshold})"
 
     similarity = compare_distribution_similarity(duration_linkedin, duration_combined)
     ln_median = duration_linkedin.dropna().median()
 
     print(
-        "Duration distribution comparison (LinkedIn vs duration-model): "
+        f"Duration distribution comparison (LinkedIn vs start({feature_set})-model): "
         f"p={similarity['p_value']:.4g} (n={similarity['n_x']}), indicating a detectable difference. "
         f"However, the effect size is small: the distributions differ by only "
         f"{12 * similarity['wasserstein']:.2f} months on average "
         f"({similarity['wasserstein'] / ln_median * 100:.2f}% of a typical duration)."
     )
 
-    data_defended = data[~data["defense_date"].isna()]
+    data_defended = start_data[~start_data["defense_date"].isna()]
     duration_accest = duration_years_from_dates(
         data_defended["defense_date"], data_defended["acceptance_date"]
     )
@@ -160,6 +191,17 @@ def main():
         box_line_width = 2.5 if show_linkedin_and_model and idx == 2 else 2
         add_box_trace(fig, values, x_position, label, color, box_width, box_line_width)
 
+    y_min = float(
+        pd.concat(
+            [duration_accest, duration_linkedin, duration_combined, duration_pbaest]
+        ).min()
+    )
+    y_max = float(
+        pd.concat(
+            [duration_accest, duration_linkedin, duration_combined, duration_pbaest]
+        ).max()
+    )
+
     fig.update_layout(
         violinmode="group",
         showlegend=False,
@@ -192,7 +234,3 @@ def main():
     )
 
     write_html(fig, out_path, trace_map=None, plot_type="violin")
-
-
-if __name__ == "__main__":
-    main()
