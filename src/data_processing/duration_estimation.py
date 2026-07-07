@@ -295,7 +295,7 @@ def prepare_data_for_prediction(data, feature_col_info, target_col_name):
     return pred_data
 
 
-def engineer_features(data):
+def engineer_features(data, simplify=False):
     """Derive the current model feature set from the cleaned input table.
 
     The current production model is intentionally small. It uses:
@@ -304,6 +304,7 @@ def engineer_features(data):
     - ``d_gap`` as their difference, which helps the uncertainty model react to
       narrow acceptance/PBA windows
     - a small number of demographic and institutional covariates
+    - simplified mode can be used to drop the categorical covariates and only keep the timing features
 
     Returns
     -------
@@ -315,15 +316,22 @@ def engineer_features(data):
     data["age_at_defense"] = data["defense_year"] - data["birth_year"]
     data["d_gap"] = data["d_pba"] - data["d_acceptance"]
 
-    feature_col_info = [
-        ("d_pba", False),
-        ("d_acceptance", False),
-        ("d_gap", False),  # important for uncertainty model
-        ("age_at_defense", False),
-        ("institute_name", True),
-        ("has_german_cship", True),
-        ("pba_state", True),
-    ]
+    if not simplify:
+        feature_col_info = [
+            ("d_pba", False),
+            ("d_acceptance", False),
+            ("d_gap", False),  # important for uncertainty model
+            ("age_at_defense", False),
+            ("institute_name", True),
+            ("has_german_cship", True),
+            ("pba_state", True),
+        ]
+    else:
+        feature_col_info = [
+            ("d_pba", False),
+            ("d_acceptance", False),
+            ("d_gap", False),  # important for uncertainty model
+        ]
     return data, feature_col_info
 
 
@@ -1034,6 +1042,7 @@ def find_parameters_and_predict(
     N=10000,
     ES=200,
     dump_folder=None,
+    dump_fname=None,
     naive_estimator_for_small_gap=(),
 ):
     """Tune the uncertainty model and write full-data duration predictions.
@@ -1050,6 +1059,7 @@ def find_parameters_and_predict(
         N=N,
         ES=ES,
         dump_folder=dump_folder,
+        dump_fname=dump_fname,
     )
 
     predict_durations(
@@ -1214,7 +1224,9 @@ def engineer_features_startdate(data, feature_set="defense"):
     acceptance_val = get_datescore(data["acceptance_year"], acceptance_month)
     data["acceptance_val"] = acceptance_val
 
-    pba_month = pd.to_datetime(data["pba_date"], errors="coerce", dayfirst=True).dt.month
+    pba_month = pd.to_datetime(
+        data["pba_date"], errors="coerce", dayfirst=True
+    ).dt.month
     pba_val = get_datescore(data["pba_year"], pba_month)
     data["pba_val"] = pba_val
 

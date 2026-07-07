@@ -43,12 +43,14 @@ DISPLAY_LABELS = {
     "start_anchor": "start / anchor",
     "start_defense": "start / defense",
     "duration_direct": "direct duration",
+    "duration_simple_temporal": "direct duration / temporal only",
 }
 
 MODEL_ORDER = {
     "start_anchor": 0,
     "start_defense": 1,
     "duration_direct": 2,
+    "duration_simple_temporal": 3,
 }
 
 
@@ -147,14 +149,18 @@ def _start_eval_from_splits(feature_set: str, n_runs=N_RUNS) -> pd.DataFrame:
     return pd.concat(outputs, ignore_index=True)
 
 
-def _duration_eval_from_splits(n_runs=N_RUNS) -> pd.DataFrame:
+def _duration_eval_from_splits(n_runs=N_RUNS, *, simplify: bool = False) -> pd.DataFrame:
     data = load_data(DATA_DIR / "clean_data.csv", DATA_DIR / "cleaned_data_dtypes.json")
-    data, feature_col_info = engineer_features(data)
+    data, feature_col_info = engineer_features(data, simplify=simplify)
     target_col = "duration_computed"
     labeled_data, cat_features = prepare_data_raw(
         data, target_col, feature_col_info, dropna=("d_pba", "d_acceptance")
     )
-    params = _load_params("best_params_RMSEWithUncertainty.json")
+    params = _load_params(
+        "best_params_RMSEWithUncertainty_simple.json"
+        if simplify
+        else "best_params_RMSEWithUncertainty.json"
+    )
 
     outputs = []
     for run in range(n_runs):
@@ -179,7 +185,7 @@ def _duration_eval_from_splits(n_runs=N_RUNS) -> pd.DataFrame:
             naive_estimator_for_small_gap=("duration_estimate", "duration_estimate_clipped"),
         )
         fold_out["run"] = run
-        fold_out["feature_set"] = "direct"
+        fold_out["feature_set"] = "temporal_only" if simplify else "direct"
         fold_out["gap_size"] = fold_out["d_pba"] - fold_out["d_acceptance"]
         fold_out["duration_error_raw"] = (
             fold_out["duration_estimate"] - fold_out["duration_computed"]
@@ -187,7 +193,12 @@ def _duration_eval_from_splits(n_runs=N_RUNS) -> pd.DataFrame:
         fold_out["duration_error_clipped"] = (
             fold_out["duration_estimate_clipped"] - fold_out["duration_computed"]
         )
-        outputs.append(_annotate(fold_out, "duration_direct"))
+        outputs.append(
+            _annotate(
+                fold_out,
+                "duration_simple_temporal" if simplify else "duration_direct",
+            )
+        )
 
     return pd.concat(outputs, ignore_index=True)
 
@@ -275,9 +286,13 @@ def main():
     start_anchor = _start_eval_from_splits("anchor")
     start_defense = _start_eval_from_splits("defense")
     duration_direct = _duration_eval_from_splits()
+    duration_simple_temporal = _duration_eval_from_splits(simplify=True)
 
     start_df = pd.concat([start_anchor, start_defense], ignore_index=True)
-    duration_df = pd.concat([start_anchor, start_defense, duration_direct], ignore_index=True)
+    duration_df = pd.concat(
+        [start_anchor, start_defense, duration_direct, duration_simple_temporal],
+        ignore_index=True,
+    )
 
     start_gap_stats = pd.concat(
         [_bin_stats(gdf, "gap_size", "start_error_clipped") for _, gdf in start_df.groupby("model_label", sort=False)],

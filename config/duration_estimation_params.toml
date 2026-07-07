@@ -1,7 +1,7 @@
 target_col_name = "duration_computed"
 out_fname = "duration_predictions.csv"
 out_path = "data"
-eval_plot_dir = "data/duration_eval_plots"
+eval_plot_dir = "eval_plots"
 orig_cols = [
   "pagination_nr",
   "faculty",
@@ -22,7 +22,7 @@ orig_cols = [
   "born_in_eu",
   "phd_subject",
 ]
-naive_est_cols = [
-  "duration_estimate",
-  "duration_estimate_clipped",
-]
+naive_est_cols = ["duration_estimate", "duration_estimate_clipped"]
+
+out_fname_for_simplified_model = "duration_predictions_simple_model.csv"
+params_fname_for_simplified_model = "best_params_RMSEWithUncertainty_simple.json"

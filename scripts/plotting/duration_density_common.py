@@ -1,18 +1,23 @@
 from __future__ import annotations
 
+from typing import Sequence
+
 import pandas as pd
 import plotly.graph_objects as go
 
-from scripts.paths import DATA_DIR
-from src.plotting.plot_config import load_plot_config
-from src.plotting.plotting_export import write_html
+
+DurationPlotSpec = tuple[str, pd.Series, str, float]
 
 
-def _yearmonth_to_year(years: pd.Series, months: pd.Series) -> pd.Series:
-    return pd.to_numeric(years, errors="coerce") + (pd.to_numeric(months, errors="coerce") - 1) / 12
+def duration_years_from_dates(later: pd.Series, earlier: pd.Series) -> pd.Series:
+    """Return a duration in fractional years from two day-month-year string columns."""
+    return (
+        pd.to_datetime(later, errors="coerce", format="%d-%m-%Y")
+        - pd.to_datetime(earlier, errors="coerce", format="%d-%m-%Y")
+    ).dt.days / 365
 
 
-def _add_violin_trace(
+def add_violin_trace(
     fig: go.Figure,
     values: pd.Series,
     x_position: float,
@@ -22,6 +27,7 @@ def _add_violin_trace(
     opacity: float,
     side: str | None = None,
 ) -> None:
+    """Add one styled violin trace centered on a numeric x-position."""
     clean = values.dropna()
     violin_kwargs = dict(
         x=[x_position] * len(clean),
@@ -45,7 +51,7 @@ def _add_violin_trace(
     fig.add_trace(go.Violin(**violin_kwargs))
 
 
-def _add_box_trace(
+def add_box_trace(
     fig: go.Figure,
     values: pd.Series,
     x_position: float,
@@ -54,6 +60,7 @@ def _add_box_trace(
     width: float,
     line_width: float,
 ) -> None:
+    """Overlay a non-hoverable box trace so median and mean remain visible."""
     clean = values.dropna()
     if clean.empty:
         return
@@ -75,55 +82,49 @@ def _add_box_trace(
     )
 
 
-def build_start_violin(feature_set: str) -> None:
-    params, params_global, out_path = load_plot_config(f"start_densities_{feature_set}")
-    color_cycle = params_global["color_cycle"]
-    always_dense_violin_style = bool(params.get("always_dense_violin_style", False))
-    dense_violin_width = float(params.get("dense_violin_width", 0.5))
-    dense_box_width = float(params.get("dense_box_width", 0.12))
-
-    data = pd.read_csv(DATA_DIR / f"start_predictions_{feature_set}.csv")
-    required_cols = [
-        "start_year",
-        "start_month",
-        "start_year_est",
-        "start_month_est",
-        "start_year_est_clipped",
-        "start_month_est_clipped",
-    ]
-    data = data.loc[data[required_cols].notna().all(axis=1)].copy()
-
-    actual_start = _yearmonth_to_year(data["start_year"], data["start_month"])
-    model_start = _yearmonth_to_year(data["start_year_est"], data["start_month_est"])
-    model_start_clipped = _yearmonth_to_year(
-        data["start_year_est_clipped"], data["start_month_est_clipped"]
-    )
-
-    plot_specs = [
-        ("LinkedIn-Start", actual_start, color_cycle[0], 0.42),
-        ("Modell-Start", model_start, color_cycle[2], 0.58),
-        ("Modell-Start (geclippt)", model_start_clipped, color_cycle[3], 0.62),
-    ]
-
-    x_positions = [0.0, 0.48, 0.96]
-    x_tickvals = x_positions
-    x_ticktext = [label for label, _values, _color, _opacity in plot_specs]
-    x_padding = 0.24
-
+def build_duration_violin_figure(
+    *,
+    plot_specs: Sequence[DurationPlotSpec],
+    x_positions: Sequence[float],
+    x_tickvals: Sequence[float],
+    x_ticktext: Sequence[str],
+    x_padding: float,
+    yaxis_title: str,
+    yaxis_range: Sequence[float] | None,
+    always_dense_violin_style: bool,
+    dense_violin_width: float,
+    dense_box_width: float,
+    show_linkedin_and_model: bool,
+    flip_linkedin_violin: bool,
+    linkedin_violin_scale: float,
+    model_box_index: int = 2,
+) -> go.Figure:
+    """Render the shared duration-density violin layout without changing trace ordering."""
     if always_dense_violin_style:
         violin_width = dense_violin_width
         box_width = dense_box_width
         violin_side = "positive"
-    else:
+    elif show_linkedin_and_model:
         violin_width = 0.34
         box_width = 0.08
         violin_side = None
+    else:
+        violin_width = 0.5
+        box_width = 0.12
+        violin_side = None
+
+    if show_linkedin_and_model:
+        violin_width *= linkedin_violin_scale
+        box_width *= linkedin_violin_scale
 
     fig = go.Figure()
     for x_position, (label, values, color, opacity) in zip(
         x_positions, plot_specs, strict=True
     ):
-        _add_violin_trace(
+        side = violin_side
+        if flip_linkedin_violin and label == "LinkedIn-Dauer":
+            side = "negative"
+        add_violin_trace(
             fig,
             values,
             x_position,
@@ -131,18 +132,41 @@ def build_start_violin(feature_set: str) -> None:
             color,
             violin_width,
             opacity,
-            side=violin_side,
+            side=side,
         )
     for idx, (x_position, (label, values, color, _opacity)) in enumerate(
         zip(x_positions, plot_specs, strict=True)
     ):
-        box_line_width = 2.5 if idx == 2 else 2
-        _add_box_trace(fig, values, x_position, label, color, box_width, box_line_width)
+        box_line_width = 2.5 if show_linkedin_and_model and idx == model_box_index else 2
+        add_box_trace(fig, values, x_position, label, color, box_width, box_line_width)
 
-    y_min = float(pd.concat([actual_start, model_start, model_start_clipped]).min())
-    y_max = float(pd.concat([actual_start, model_start, model_start_clipped]).max())
+    if yaxis_range is None:
+        yaxis = dict(
+            title=yaxis_title,
+            showgrid=True,
+            gridcolor="rgba(0,0,0,0.15)",
+            zeroline=False,
+            showspikes=True,
+            spikemode="across",
+            spikesnap="cursor",
+            spikethickness=1,
+            automargin=True,
+        )
+    else:
+        yaxis = dict(
+            title=yaxis_title,
+            showgrid=True,
+            gridcolor="rgba(0,0,0,0.15)",
+            zeroline=False,
+            range=list(yaxis_range),
+            showspikes=True,
+            spikemode="across",
+            spikesnap="cursor",
+            spikethickness=1,
+            automargin=True,
+        )
 
-    fig.update_layout(
+    layout_kwargs = dict(
         violinmode="group",
         showlegend=False,
         hovermode="closest",
@@ -151,18 +175,7 @@ def build_start_violin(feature_set: str) -> None:
         margin=dict(l=60, r=30, t=40, b=90),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        yaxis=dict(
-            title="Startjahr",
-            showgrid=True,
-            gridcolor="rgba(0,0,0,0.15)",
-            zeroline=False,
-            range=[y_min - 0.75, y_max + 0.75],
-            showspikes=True,
-            spikemode="across",
-            spikesnap="cursor",
-            spikethickness=1,
-            automargin=True,
-        ),
+        yaxis=yaxis,
         xaxis=dict(
             title="",
             tickmode="array",
@@ -173,4 +186,5 @@ def build_start_violin(feature_set: str) -> None:
         ),
     )
 
-    write_html(fig, out_path, trace_map=None, plot_type="violin")
+    fig.update_layout(**layout_kwargs)
+    return fig

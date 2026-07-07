@@ -16,12 +16,12 @@ from scripts.plotting.duration_density_common import (
 
 
 def main():
-    """Write the duration-density comparison using the main duration model."""
-    params, params_global, out_path = load_plot_config("duration_densities")
+    """Write the duration-density comparison using the simple duration model."""
+    params, params_global, out_path = load_plot_config("duration_densities_simple")
     color_cycle = params_global["color_cycle"]
 
-    use_model = params["use_model"]
     show_linkedin_and_model = params["show_linkedin_and_model"]
+    use_model = params["use_model"]
     ci_threshold = params["ci_threshold"]
     ci_mode = params["ci_mode"]
     always_dense_violin_style = bool(params.get("always_dense_violin_style", False))
@@ -31,18 +31,17 @@ def main():
     linkedin_violin_scale = float(params.get("linkedin_violin_scale", 0.9))
 
     data = load_data(DATA_DIR / "clean_data.csv", DATA_DIR / "cleaned_data_dtypes.json")
-    duration_data = pd.read_csv(DATA_DIR / "duration_predictions.csv")
-    combined_duration = get_combined_duration(duration_data, ci_threshold, mode=ci_mode)
+    duration_data = pd.read_csv(DATA_DIR / "duration_predictions_simple_model.csv")
+    duration_combined = get_combined_duration(duration_data, ci_threshold, mode=ci_mode)
 
     duration_linkedin = duration_data["duration_computed"]
-    duration_combined = combined_duration
-    combined_label = f"LinkedIn + Modell (CI <= {ci_threshold})"
+    simple_label = f"LinkedIn + Einfaches Modell (CI <= {ci_threshold})"
 
     similarity = compare_distribution_similarity(duration_linkedin, duration_combined)
     ln_median = duration_linkedin.dropna().median()
 
     print(
-        "Duration distribution comparison (LinkedIn vs duration-model): "
+        "Duration distribution comparison (LinkedIn vs simple model): "
         f"p={similarity['p_value']:.4g} (n={similarity['n_x']}), indicating a detectable difference. "
         f"However, the effect size is small: the distributions differ by only "
         f"{12 * similarity['wasserstein']:.2f} months on average "
@@ -63,9 +62,9 @@ def main():
     ]
 
     if show_linkedin_and_model:
-        plot_specs.append((combined_label, duration_combined, color_cycle[2], 0.62))
+        plot_specs.append((simple_label, duration_combined, color_cycle[2], 0.62))
     elif use_model:
-        plot_specs[-1] = (combined_label, duration_combined, color_cycle[0], 0.55)
+        plot_specs[-1] = (simple_label, duration_combined, color_cycle[0], 0.55)
 
     plot_specs.append(("Verteidigung - PBA", duration_pbaest, color_cycle[3], 0.55))
 

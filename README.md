@@ -17,6 +17,13 @@ Interactive plotting code is split into:
 - `src/data_loading/load_data.py` for reading the cleaned dataset
 - `config/plotting_params.toml` for plot thresholds, output folders, and style mappings
 
+The plotting config uses separate sections for the different workflows, including
+`[regression]` for duration regression and `[gender_regression]` for gender
+regression.
+
+The gender regression plots are driven by `scripts/plotting/p_gender_regression.py`
+and use the gender-specific section in the same TOML file.
+
 The plotting scripts expect these files under `data/`:
 
 - `clean_data.csv`

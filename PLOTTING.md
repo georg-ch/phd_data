@@ -19,21 +19,12 @@ The plotting scripts expect:
 - `data/cleaned_data_dtypes.json`
 - `config/plotting_params.toml`
 
+The plotting config uses separate sections for the different workflows, including
+`[regression]` for duration regression and `[gender_regression]` for gender
+regression.
+
 `src/plotting/plot_config.py` resolves the config file relative to the project
 root and derives output HTML paths from the selected TOML section.
-
-## Reading Order
-
-1. `scripts/plotting/p_acceptance_by_year.py`
-2. `src/data_loading/load_data.py`
-3. `src/plotting/plot_config.py`
-4. `src/plotting/plotting_data.py`
-5. `src/plotting/plotting_export.py`
-6. `src/plotting/year_barplot_interactive.py`
-7. `src/plotting/year_lineplot_interactive.py`
-8. `src/plotting/pie_charts.py`
-9. `src/plotting/sankey_interactive.py`
-10. one of the other `scripts/plotting/p_*.py` entry modules
 
 ## Entrypoints
 
@@ -46,6 +37,7 @@ These files are the thin plotting entry modules:
 - `scripts/plotting/p_cship_by_year.py`
 - `scripts/plotting/p_gender_acceptance_by_year.py`
 - `scripts/plotting/p_gender_defense_by_year.py`
+- `scripts/plotting/p_gender_regression.py`
 - `scripts/plotting/p_sankey_institutes.py`
 - `scripts/plotting/p_sankey_faculties.py`
 - `scripts/plotting/p_pba_category_pie.py`
@@ -103,6 +95,8 @@ and institute cleanup.
 
 - Shared helpers should prefer `year` and `count`.
 - Plot-specific thresholds and output folders live in `config/plotting_params.toml`.
+- The shared plotting config uses separate sections for the duration and gender
+  regression workflows.
 - Entry modules should use `load_plot_config(...)` instead of reimplementing TOML
   loading and output path derivation.
 - Shared modules under `src/plotting/` are imported via `src.plotting...` paths.

@@ -4,9 +4,11 @@ from src.plotting.js_css import (
     css,
     generate_js,
     js_resize_barplot,
+    js_resize_forest,
     js_resize_lineplot,
     js_resize_sankey,
     js_resize_violin,
+    js_resize_violin_contrast,
 )
 
 
@@ -21,8 +23,12 @@ def write_html(fig, out_path, trace_map, plot_type):
             js = generate_js(trace_map) + js_resize_sankey
         case "bar_category":
             js = js_resize_barplot
+        case "forest":
+            js = js_resize_forest
         case "violin":
             js = js_resize_violin
+        case "violin_contrast":
+            js = js_resize_violin + js_resize_violin_contrast
         case _:
             raise ValueError(f"Unknown plot type: {plot_type}")
 

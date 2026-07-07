@@ -795,6 +795,10 @@ js_resize_violin = r"""
     if (!w) return;
 
     var isMobile = (w < MOBILE_BREAKPOINT);
+    var currentTickangle = null;
+    if (gd.layout && gd.layout.xaxis && typeof gd.layout.xaxis.tickangle === "number") {
+      currentTickangle = gd.layout.xaxis.tickangle;
+    }
     var base = clamp(w / 52, 9, 18);
     var tick = clamp(w / 65, 8, 15);
     var title = clamp(w / 42, 10, 20);
@@ -819,7 +823,9 @@ js_resize_violin = r"""
       "yaxis.tickfont.size": tick,
       "xaxis.title.font.size": title,
       "yaxis.title.font.size": title,
-      "xaxis.tickangle": isMobile ? -25 : 0,
+      "xaxis.tickangle": isMobile
+        ? (currentTickangle !== null ? currentTickangle : -25)
+        : (currentTickangle !== null ? currentTickangle : 0),
       "xaxis.automargin": true,
       "yaxis.automargin": true
     });
@@ -829,6 +835,263 @@ js_resize_violin = r"""
 
   if (window.ResizeObserver) {
     var ro = new ResizeObserver(function () { resizeToWrapper(); });
+    ro.observe(getWrapper());
+  }
+
+  window.addEventListener("load", resizeToWrapper);
+  window.addEventListener("orientationchange", resizeToWrapper);
+
+  setTimeout(resizeToWrapper, 50);
+  setTimeout(resizeToWrapper, 250);
+})();
+"""
+
+
+js_resize_forest = r"""
+(function () {
+  var gd = document.getElementById("phd_plot");
+  if (!gd) return;
+
+  function clamp(x, lo, hi) {
+    if (x < lo) return lo;
+    if (x > hi) return hi;
+    return x;
+  }
+
+  function getWrapper() {
+    var wrap = null;
+    if (gd.closest) wrap = gd.closest(".plot-wrap");
+    return wrap || gd.parentElement || gd;
+  }
+
+  function cacheOriginalMarkerSizes() {
+    if (gd._forestOrigMarkerSize) return gd._forestOrigMarkerSize;
+
+    gd._forestOrigMarkerSize = (gd.data || []).map(function (tr) {
+      var marker = tr && tr.marker ? tr.marker : {};
+      var size = marker.size;
+      if (size === undefined || size === null) size = 10;
+      return size;
+    });
+    return gd._forestOrigMarkerSize;
+  }
+
+  function cacheOriginalErrorThicknesses() {
+    if (gd._forestOrigErrorThickness) return gd._forestOrigErrorThickness;
+
+    gd._forestOrigErrorThickness = (gd.data || []).map(function (tr) {
+      var errorX = tr && tr.error_x ? tr.error_x : {};
+      var thickness = errorX.thickness;
+      if (thickness === undefined || thickness === null) thickness = 2;
+      return thickness;
+    });
+    return gd._forestOrigErrorThickness;
+  }
+
+  function getRowCount() {
+    if (!gd.data || !gd.data.length) return 0;
+    var first = gd.data[0] || {};
+    if (Array.isArray(first.y)) return first.y.length;
+    if (gd.layout && gd.layout.yaxis && Array.isArray(gd.layout.yaxis.categoryarray)) {
+      return gd.layout.yaxis.categoryarray.length;
+    }
+    return 0;
+  }
+
+  function resizeToWrapper() {
+    var wrap = getWrapper();
+    var w = wrap.clientWidth;
+    if (!w) return;
+
+    var origMarkerSizes = cacheOriginalMarkerSizes();
+    var origErrorThicknesses = cacheOriginalErrorThicknesses();
+    var rowCount = getRowCount();
+
+    var base = clamp(w / 72, 8, 14);
+    var tick = clamp(w / 82, 7, 13);
+    var title = clamp(w / 62, 9, 15);
+    var hover = clamp(w / 85, 8, 13);
+    var marginLeft = w < 520 ? 96 : 140;
+    var marginRight = w < 520 ? 12 : 40;
+    var rowPitch = clamp(w / 36, 13, 22);
+    var height = Math.max(150, Math.round(rowPitch * Math.max(rowCount, 1) + 44));
+
+    var resizeKey = [
+      w,
+      base,
+      tick,
+      title,
+      hover,
+      marginLeft,
+      marginRight,
+      rowPitch,
+      rowCount
+    ].join("|");
+
+    if (gd._forestResizeKey === resizeKey) return;
+    gd._forestResizeKey = resizeKey;
+
+    Plotly.relayout(gd, {
+      width: w,
+      height: height,
+      "font.size": base,
+      "hoverlabel.font.size": hover,
+      "xaxis.title.font.size": title,
+      "xaxis.tickfont.size": tick,
+      "yaxis.tickfont.size": tick,
+      "margin.l": marginLeft,
+      "margin.r": marginRight,
+      "xaxis.automargin": true,
+      "yaxis.automargin": true
+    });
+
+    (gd.data || []).forEach(function (tr, idx) {
+      var marker = tr && tr.marker ? tr.marker : null;
+      if (!marker) return;
+
+      var nextSize = origMarkerSizes[idx];
+      if (w < 650) {
+        nextSize = Math.max(4, Math.round(nextSize * 0.5));
+      }
+
+      if (marker.size !== nextSize) {
+        Plotly.restyle(gd, { "marker.size": [nextSize] }, [idx]);
+      }
+    });
+
+    (gd.data || []).forEach(function (tr, idx) {
+      var errorX = tr && tr.error_x ? tr.error_x : null;
+      if (!errorX) return;
+
+      var nextThickness = origErrorThicknesses[idx];
+      if (w < 700) {
+        nextThickness = Math.max(1, Math.round(nextThickness * 0.7));
+      }
+
+      if (errorX.thickness !== nextThickness) {
+        Plotly.restyle(gd, { "error_x.thickness": [nextThickness] }, [idx]);
+      }
+    });
+  }
+
+  function queueResize() {
+    if (gd._forestResizeQueued) return;
+    gd._forestResizeQueued = true;
+
+    requestAnimationFrame(function () {
+      gd._forestResizeQueued = false;
+      resizeToWrapper();
+    });
+  }
+
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(function () { queueResize(); });
+    ro.observe(getWrapper());
+  }
+
+  window.addEventListener("load", queueResize);
+  window.addEventListener("orientationchange", queueResize);
+
+  setTimeout(queueResize, 50);
+  setTimeout(queueResize, 250);
+})();
+"""
+
+
+js_resize_violin_contrast = r"""
+(function () {
+  var gd = document.getElementById("phd_plot");
+  if (!gd) return;
+
+  function clamp(x, lo, hi) {
+    if (x < lo) return lo;
+    if (x > hi) return hi;
+    return x;
+  }
+
+  function getWrapper() {
+    var wrap = null;
+    if (gd.closest) wrap = gd.closest(".plot-wrap");
+    return wrap || gd.parentElement || gd;
+  }
+
+  function cacheForestTraceSizes() {
+    if (gd._contrastResizeCache) return gd._contrastResizeCache;
+
+    var traceSizes = [];
+    (gd.data || []).forEach(function (tr, idx) {
+      if (!tr || !tr.error_y || !tr.error_y.visible) return;
+      var marker = tr.marker || {};
+      var size = marker.size;
+      if (size === undefined || size === null) size = 7;
+      traceSizes.push({ idx: idx, size: size });
+    });
+
+    gd._contrastResizeCache = { traceSizes: traceSizes };
+    return gd._contrastResizeCache;
+  }
+
+  function resizeToWrapper() {
+    var wrap = getWrapper();
+    var w = wrap.clientWidth;
+    if (!w) return;
+
+    var cache = cacheForestTraceSizes();
+    var xaxis = gd.layout && gd.layout.xaxis ? gd.layout.xaxis : {};
+    var ticktext = xaxis.ticktext;
+    var nCategories = Array.isArray(ticktext) ? ticktext.length : 0;
+    var manyCategories = nCategories >= 8;
+
+    var base = clamp(w / 52, 9, 18);
+    var tick = clamp(w / 65, 8, 15);
+    var title = clamp(w / 42, 10, 20);
+    var hover = clamp(w / 70, 9, 14);
+
+    if (w < 550 && manyCategories) {
+      base = Math.max(7, base - 1);
+      tick = Math.max(7, tick - 1);
+      title = Math.max(9, title - 1);
+      hover = Math.max(8, hover - 1);
+    }
+
+    if (w < 450 && manyCategories) {
+      base = Math.max(5, base - 2);
+      tick = Math.max(5, tick - 2);
+      title = Math.max(7, title - 2);
+      hover = Math.max(6, hover - 2);
+    }
+
+    Plotly.relayout(gd, {
+      "font.size": base,
+      "hoverlabel.font.size": hover,
+      "xaxis.tickfont.size": tick,
+      "yaxis.tickfont.size": tick,
+      "xaxis.title.font.size": title,
+      "yaxis.title.font.size": title
+    });
+
+    cache.traceSizes.forEach(function (traceSize) {
+      var nextSize = traceSize.size;
+      if (w < 650) {
+        nextSize = Math.max(4, Math.round(traceSize.size * 0.5));
+      }
+
+      var currentSize =
+        gd.data &&
+        gd.data[traceSize.idx] &&
+        gd.data[traceSize.idx].marker &&
+        gd.data[traceSize.idx].marker.size;
+
+      if (currentSize !== nextSize) {
+        Plotly.restyle(gd, { "marker.size": [nextSize] }, [traceSize.idx]);
+      }
+    });
+  }
+
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(function () {
+      resizeToWrapper();
+    });
     ro.observe(getWrapper());
   }
 

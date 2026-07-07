@@ -1,4 +1,7 @@
 [global]
+# Schaltet zusätzliche Konsolen-Ausgaben der Plot-Skripte ein oder aus.
+verbose = false
+# Farbfolge für die Standard-Plots; wird pro Serie/Gruppe zyklisch verwendet.
 color_cycle = [
   "#4E79A7", # blue
   "#F28E2B", # orange
@@ -9,6 +12,7 @@ color_cycle = [
   "#B07AA1", # purple
   "#FF9DA7", # pink
 ]
+# Erweiterte Farbpalette fuer Plots mit mehr Kategorien als die Standard-Folge.
 color_palette_expanded = [
   "#4E79A7", # blue
   "#F28E2B", # orange
@@ -27,9 +31,12 @@ color_palette_expanded = [
   "#80BA5A", # lime
   "#E68310", # amber
 ]
+# Ersatzfarbe fuer nicht hervorgehobene oder zusammengefasste Elemente.
 restcolor = "#BBBBBB"
+# Farbe fuer Institute innerhalb einer Fakultet, wenn sie in einem Gesamtplot markiert werden.
 fac_in_inst_color = "#7d7d7d"
 
+# Reihenfolge der Fachgruppen in den Uebersichts- und Vergleichsplots.
 subject_groups = [
   "Geisteswissenschaften",
   "Mathematik, Naturwissenschaften",
@@ -39,9 +46,11 @@ subject_groups = [
 ]
 
 [global.faculty_institute_mappings."Fakultät I"]
+# Index der Hauptfarbe fuer diese Fakultaet.
 color = 0
 
 [global.faculty_institute_mappings."Fakultät I".institute_colors]
+# Farbe je Institut innerhalb der Fakultaet; steuert die interne Reihenfolge im Plot.
 "Institut für Sprache und Kommunikation" = 0
 "Institut für Berufliche Bildung und Arbeitslehre" = 1
 "Institut für Kunstwissenschaft und Historische Urbanistik" = 2
@@ -51,6 +60,7 @@ color = 0
 "Zentrum für Interdisziplinäre Frauen- und Geschlechterforschung" = 6
 
 [global.faculty_institute_mappings."Fakultät II"]
+# Index der Hauptfarbe fuer diese Fakultaet.
 color = 1
 
 [global.faculty_institute_mappings."Fakultät II".institute_colors]
@@ -63,6 +73,7 @@ color = 1
 "Zentrum für Astronomie und Astrophysik" = 6
 
 [global.faculty_institute_mappings."Fakultät III"]
+# Index der Hauptfarbe fuer diese Fakultaet.
 color = 2
 
 [global.faculty_institute_mappings."Fakultät III".institute_colors]
@@ -74,6 +85,7 @@ color = 2
 "Institut für Lebensmitteltechnologie und Lebensmittelchemie" = 5
 
 [global.faculty_institute_mappings."Fakultät IV"]
+# Index der Hauptfarbe fuer diese Fakultaet.
 color = 3
 
 [global.faculty_institute_mappings."Fakultät IV".institute_colors]
@@ -85,6 +97,7 @@ color = 3
 "Institut für Wirtschaftsinformatik und Quantitative Methoden" = 5
 
 [global.faculty_institute_mappings."Fakultät V"]
+# Index der Hauptfarbe fuer diese Fakultaet.
 color = 4
 
 [global.faculty_institute_mappings."Fakultät V".institute_colors]
@@ -97,6 +110,7 @@ color = 4
 "Institut für Mechanik" = 6
 
 [global.faculty_institute_mappings."Fakultät VI"]
+# Index der Hauptfarbe fuer diese Fakultaet.
 color = 5
 
 [global.faculty_institute_mappings."Fakultät VI".institute_colors]
@@ -110,6 +124,7 @@ color = 5
 "Institut für Ökologie" = 7
 
 [global.faculty_institute_mappings."Fakultät VII"]
+# Index der Hauptfarbe fuer diese Fakultaet.
 color = 6
 
 [global.faculty_institute_mappings."Fakultät VII".institute_colors]
@@ -118,104 +133,228 @@ color = 6
 "Institut für Betriebswirtschaftlehre" = 2
 
 [global.institute_remap]
+# Vereinheitlicht mehrere Institute auf eine gemeinsame Anzeigegruppe im Plot, nach Aendrung in Unistruktur.
 "Institut für Festkörperphysik" = "Institut für Physik und Astronomie"
 "Institut für Optik und Atomare Physik" = "Institut für Physik und Astronomie"
 "Institut für Theoretische Physik" = "Institut für Physik und Astronomie"
 "Zentrum für Astronomie und Astrophysik" = "Institut für Physik und Astronomie"
 
 [duration_densities]
+# Nutzt Modell statt Rohdaten fuer die LinkedIn-Dauer, aber nur wenn die Modellkurve nicht ohnehin gemeinsam mit LinkedIn gezeigt wird.
 use_model = false
+# Zeigt LinkedIn- und Modellkurve gemeinsam an.
 show_linkedin_and_model = true
+# Schwellwert in Jahren fuer die Auswahl, ob die CI-Schaetzung in die Modellkurve eingeht. 1000: alle Daten (dies ist, was wir nutzen!)
 ci_threshold = 1000
+# Welche CI-Variante fuer die Durations-Schätzung verwendet wird. Irrelevant bei CI_threshold = 1000
 ci_mode = "double_long_side"
+# Erzwingt die kompakte Violin-Darstellung auch fuer wenige Kategorien.
+always_dense_violin_style = true
+# Breite der Violine im kompakten Modus.
+dense_violin_width = 0.5
+# Breite des Box-Overlays im kompakten Modus.
+dense_box_width = 0.12
+# Spiegelt nur die LinkedIn-Violine.
+flip_linkedin_violin = true
+# Skaliert Violine und Box der LinkedIn-Reihe, wenn LinkedIn und Modell gemeinsam gezeigt werden.
+linkedin_violin_scale = 0.9
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "total_dur_densities"
 
-[start_densities_anchor]
+[duration_densities_simple]
+# Nutzt die vereinfachte Schaetzung statt der Modell-Variante aus den normalen Durations-Plots.
+use_model = false
+# Zeigt LinkedIn- und vereinfachte Schaetzung gemeinsam an.
+show_linkedin_and_model = true
+# Schwellwert in Jahren fuer die Auswahl, ob die CI-Schaetzung in die simple Modellkurve eingeht.
+ci_threshold = 1000
+# Welche CI-Variante fuer die Durations-Schaetzung verwendet wird.
+ci_mode = "double_long_side"
+# Erzwingt die kompakte Violin-Darstellung auch fuer wenige Kategorien.
+always_dense_violin_style = true
+# Breite der Violine im kompakten Modus.
+dense_violin_width = 0.5
+# Breite des Box-Overlays im kompakten Modus.
+dense_box_width = 0.12
+# Spiegelt nur die LinkedIn-Violine.
+flip_linkedin_violin = true
+# Skaliert Violine und Box der LinkedIn-Reihe, wenn LinkedIn und Modell gemeinsam gezeigt werden.
+linkedin_violin_scale = 0.9
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
+out_name = "total_dur_densities_simple"
+
+[start_densities_anchor]
+# Erzwingt die kompakte Violin-Darstellung auch fuer wenige Kategorien.
+always_dense_violin_style = true
+# Breite der Violine im kompakten Modus.
+dense_violin_width = 0.5
+# Breite des Box-Overlays im kompakten Modus.
+dense_box_width = 0.12
+# Zielordner fuer die erzeugten HTML-Plots.
+out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "start_densities_anchor"
 
 [start_densities_defense]
+# Erzwingt die kompakte Violin-Darstellung auch fuer wenige Kategorien.
+always_dense_violin_style = true
+# Breite der Violine im kompakten Modus.
+dense_violin_width = 0.5
+# Breite des Box-Overlays im kompakten Modus.
+dense_box_width = 0.12
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "start_densities_defense"
 
 [duration_densities_from_start_anchor]
+# Nutzt das Modell statt der Rohdaten fuer die LinkedIn-Dauer, aber nur wenn die Modellkurve nicht ohnehin gemeinsam mit LinkedIn gezeigt wird.
 use_model = false
+# Zeigt LinkedIn- und Modellkurve gemeinsam an.
 show_linkedin_and_model = true
+# Schwellwert fuer die Auswahl, ob die CI-Schaetzung in die Modellkurve eingeht. 1000, keine Auswahl, alle Daten werden genutzt (nicht aendern).
 ci_threshold = 1000
+# Welche CI-Variante fuer die Durations-Schaetzung verwendet wird. Irrelevant bei CI_threshold = 1000
 ci_mode = "double_long_side"
+# Erzwingt die kompakte Violin-Darstellung auch fuer wenige Kategorien.
+always_dense_violin_style = true
+# Breite der Violine im kompakten Modus.
+dense_violin_width = 0.5
+# Breite des Box-Overlays im kompakten Modus.
+dense_box_width = 0.12
+# Spiegelt nur die LinkedIn-Violine, damit die Vergleichsrichtung sichtbar bleibt.
+flip_linkedin_violin = true
+# Skaliert Violine und Box der LinkedIn-Reihe, wenn LinkedIn und Modell gemeinsam gezeigt werden.
+linkedin_violin_scale = 0.9
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "duration_densities_from_start_anchor"
 
 [duration_densities_from_start_defense]
+# Nutzt das Modell statt der Rohdaten fuer die LinkedIn-Dauer, aber nur wenn die Modellkurve nicht ohnehin gemeinsam mit LinkedIn gezeigt wird.
 use_model = false
+# Zeigt LinkedIn- und Modellkurve gemeinsam an.
 show_linkedin_and_model = true
+# Schwellwert fuer die Auswahl, ob die CI-Schaetzung in die Modellkurve eingeht. 1000, keine Auswahl, alle Daten werden genutzt (nicht aendern).
 ci_threshold = 1000
+# Welche CI-Variante fuer die Durations-Schaetzung verwendet wird. Irrelevant bei CI_threshold = 1000
 ci_mode = "double_long_side"
+# Erzwingt die kompakte Violin-Darstellung auch fuer wenige Kategorien.
+always_dense_violin_style = true
+# Breite der Violine im kompakten Modus.
+dense_violin_width = 0.5
+# Breite des Box-Overlays im kompakten Modus.
+dense_box_width = 0.12
+# Spiegelt nur die LinkedIn-Violine, damit die Vergleichsrichtung sichtbar bleibt.
+flip_linkedin_violin = true
+# Skaliert Violine und Box der LinkedIn-Reihe, wenn LinkedIn und Modell gemeinsam gezeigt werden.
+linkedin_violin_scale = 0.9
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "duration_densities_from_start_defense"
 
 [acc_by_year]
+# Filterung Untergrenze (Annahme)
 start_year = 2014
+# Filterung Obergrenze (Annahme)
 end_year = 2025
 
+# Mindestanzahl an Instituten, damit ein Jahr in den Plot aufgenommen wird.
 n_min_institute = 5
 
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "acceptance_by_year"
 
 [def_by_year]
+# Filterung Untergrenze (Verteidigung)
 start_year = 2018
+# Filterung Obergrenze (Verteidigung)
 end_year = 2025
 
+# Mindestanzahl an Instituten, damit ein Jahr in den Plot aufgenommen wird.
 n_min_institute = 5
 
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "defense_by_year"
 
 [study_matrix]
+# Filterung Untergrenze (Annahme)
 start_year = 2014
+# Filterung Obergrenze (Annahme)
 end_year = 2025
 
+# Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
 n_min_categories = 5
 
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "region_matrix_barplot"
 
 [pbacat_by_year]
+# Filterung Untergrenze (PBA)
 start_year = 2014
+# Filterung Obergrenze (PBA)
 end_year = 2025
 
+# Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
 n_min_categories = 5
 
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "pba_category_by_year"
 
 [country_by_year]
+# Filterung Untergrenze (Anmeldung)
 start_year = 2014
+# Filterung Obergrenze (Anmeldung)
 end_year = 2025
 
+# Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
 n_min_categories = 5
 
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "pba_state_by_year"
 
 [cship_by_year]
+# Filterung Untergrenze (Anmeldung)
 start_year = 2014
+# Filterung Obergrenze (Anmeldung)
 end_year = 2025
 
+# Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
 n_min_categories = 5
 
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "cship_by_year"
 
 [pbacat_pie]
+# Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
+# Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 end_year = 2025
 
+# Wird in diesem Plot derzeit nicht genutzt, weil keine Rest-Aggregation aktiv ist.
 n_min_institute = 5
 
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "pba_category"
 
 [pbacat_pie.category_label_names]
@@ -226,82 +365,117 @@ EU = "Hochschule in Europa"
 NEU = "Hochschule außerhalb Europas"
 
 [pbastate_pie]
+# Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
+# Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 end_year = 2025
 
+# Wird in diesem Plot derzeit nicht genutzt, weil keine Rest-Aggregation aktiv ist.
 n_min_institute = 5
 
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
 out_name = "pba_cat_pie"
 [pbastate_pie.category_label_names]
+# Platzhalter, weil hier aktuell keine Umbenennung der Kategorien erfolgt.
 0 = 0
 
 [country_pie]
+# Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
+# Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 end_year = 2025
 
+# Wird in diesem Plot derzeit nicht genutzt; die Top-N-Auswahl erfolgt ueber `n_biggest_countries`.
 n_min_country = 0
+# Wie viele der groessten Laender im Plot separat gezeigt werden; der Rest landet in "Rest".
 n_biggest_countries = 6
 
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "pba_state"
 [country_pie.category_label_names]
+# Dummy-Wert fuer die Kategorie-Tabelle, falls keine Ersetzungen noetig sind.
 0 = 0
 
 [cship_pie]
+# Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
+# Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 end_year = 2025
 
+# Wird in diesem Plot derzeit nicht genutzt; die Top-N-Auswahl erfolgt ueber `n_biggest_countries`.
 n_min_country = 0
+# Wie viele der groessten Kategorien im Plot separat gezeigt werden; der Rest landet in "Rest".
 n_biggest_countries = 6
 
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "cship"
 [cship_pie.category_label_names]
+# Dummy-Wert fuer die Kategorie-Tabelle, falls keine Ersetzungen noetig sind.
 0 = 0
 
 
 [gender_by_year_def]
+# Filterung Untergrenze fuer die Jahresreihe (Verteidigung).
 start_year = 2018
+# Filterung Obergrenze fuer die Jahresreihe (Verteidigung).
 end_year = 2025
 
-# die folgenden Parameter werden für die Logik verwendet, um Institute zu entfernen, die zu wenig Daten haben.
-min_year_prune = 2020     # das Jahr, ab dem die Logik greift (fruehe Jahre haben generell weniger Daten)
-n_min_institutes_abs = 2  # in keinem Jahr darf es weniger Anmeldungen geben als diese Zahl
-n_min_institutes_mean = 9 # im Schnitt muss es mindestens so viele Anmeldungen pro Jahr geben
+# Diese Parameter steuern das Ausdünnen von Instituten mit zu wenig Daten.
+# Ab diesem Jahr greift die Pruning-Logik; fruehere Jahre sind oft noch zu klein.
+min_year_prune = 2020
+# In keinem Jahr darf ein Institut unter diese absolute Mindestzahl fallen.
+n_min_institutes_abs = 2
+# Ueber den gesamten Zeitraum muss der Jahresschnitt mindestens so hoch sein.
+n_min_institutes_mean = 9
 
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "gender_defense_by_year"
 
-
+# Groesse der Marker fuer die Fakultets- und Institutslinien.
 marker_fac_size = 12
 marker_inst_size = 12
 marker_total_size = 22
 marker_fac_in_inst = 16
 
+# Linienbreiten fuer die verschiedenen Reihen.
 width_fac = 4
 width_inst = 4
 width_total = 12
 width_fac_in_inst = 4
 
 [gender_by_year]
+# Filterung Untergrenze fuer die Jahresreihe (Anmeldung).
 start_year = 2014
+# Filterung Obergrenze fuer die Jahresreihe (Anmeldung).
 end_year = 2025
 
-# die folgenden Parameter werden für die Logik verwendet, um Institute zu entfernen, die zu wenig Daten haben.
-min_year_prune = 2020     # das Jahr, ab dem die Logik greift (fruehe Jahre haben generell weniger Daten)
-n_min_institutes_abs = 6  # in keinem Jahr darf es weniger Anmeldungen geben als diese Zahl
-n_min_institutes_mean = 9 # im Schnitt muss es mindestens so viele Anmeldungen pro Jahr geben
+# Diese Parameter steuern das Ausdünnen von Instituten mit zu wenig Daten.
+# Ab diesem Jahr greift die Pruning-Logik; fruehere Jahre sind oft noch zu klein.
+min_year_prune = 2020
+# In keinem Jahr darf ein Institut unter diese absolute Mindestzahl fallen.
+n_min_institutes_abs = 6
+# Ueber den gesamten Zeitraum muss der Jahresschnitt mindestens so hoch sein.
+n_min_institutes_mean = 9
 
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "gender_acceptance_by_year"
 
-
+# Groesse der Marker fuer die Fakultets- und Institutslinien.
 marker_fac_size = 12
 marker_inst_size = 12
 marker_total_size = 22
 marker_fac_in_inst = 16
 
+# Linienbreiten fuer die verschiedenen Reihen.
 width_fac = 4
 width_inst = 4
 width_total = 12
@@ -309,21 +483,152 @@ width_fac_in_inst = 4
 
 
 [subject]
+# Filter Untergrenze fuer die Sankey-Ansicht.
 start_year = 2014
+# Filter Obergrenze fuer die Sankey-Ansicht.
 end_year = 2025
 
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "sankey_institutes"
+# Transparenz der Verbindungsbalken im Sankey-Plot.
 link_alpha = 0.7
+# Breite der Knoten in der Sankey-Darstellung.
 node_thickness = 100
 
 
 [subject_overview]
+# Filter Untergrenze 
 start_year = 2014
+# Filter Obergrenze
 end_year = 2025
 
+# Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
 out_name = "sankey_faculties"
 
+# Transparenz der Verbindungsbalken im Sankey-Plot.
 link_alpha = 0.7
+# Breite der Knoten in der Sankey-Darstellung.
 node_thickness = 100
+
+[regression]
+# Filter Untergrenze fuer Dauer-Regression
+start_year = 2014
+# Filter Obergrenze fuer Dauer-Regression
+end_year = 2026
+
+# Zielordner fuer die erzeugten HTML-Plots.
+out_folder = "int_plots"
+# Basisname fuer die Regressionsausgaben.
+out_name = "regression"
+
+# Unter dieser Gruppengroesse werden seltene Kategorien in den Regressions- und Plot-Schritten zusammengefasst.
+small_group_cutoff = 10
+
+# Spalten, in denen diese Zusammenfuehrung aktiv ist.
+merge_cols = [
+  "institute_name",
+  "pba_type",
+  "phd_subject",
+  "subject_group_stala",
+]
+
+[gender_regression]
+# Filter Untergrenze fuer Gender-Regression
+start_year = 2014
+# Filter Obergrenze fuer Gender-Regression
+end_year = 2026
+
+# Zielordner fuer die erzeugten HTML-Plots.
+out_folder = "int_plots"
+# Basisname fuer die Gender-Regression-Ausgaben.
+out_name = "regression"
+
+# Unter dieser Gruppengroesse werden seltene Kategorien in der Gender-Regression zusammengefasst.
+small_group_cutoff = 10
+
+# Spalten, in denen diese Zusammenfuehrung aktiv ist.
+merge_cols = [
+  "institute_name",
+  "pba_type",
+  "phd_subject",
+  "subject_group_stala",
+]
+
+[regression_features]
+# Zielordner fuer die erzeugten HTML-Plots.
+out_folder = "int_plots"
+# Basisname fuer die Feature-Vergleichsplots.
+out_name = "regression_features"
+# Beschriftung der x-Achse in den Feature-Performance-Plot.
+x_label = "Merkmal"
+# Beschriftung der y-Achse in den Feature-Performance-Plot.
+y_label = "Effektgröße (part. R²)"
+# Features, die in diesem Plot ausgeblendet werden.
+omitted_features = ["pba_grade_missing"]
+
+[regression_features.feature_label_names]
+# Anzeigename fuer das betreffende Feature im Plot.
+institute_name = "Institut"
+# Anzeigename fuer das betreffende Feature im Plot.
+pba_category = "PBA-Kategorie"
+# Anzeigename fuer das betreffende Feature im Plot.
+is_male = "Männlich"
+# Anzeigename fuer das betreffende Feature im Plot.
+pba_grade = "PBA-Note"
+# Anzeigename fuer das betreffende Feature im Plot.
+pba_grade_missing = "PBA-Note fehlt"
+# Anzeigename fuer das betreffende Feature im Plot.
+pba_type = "PBA-Typ"
+
+[catcontrast_violins]
+# Zielvariable fuer die Violin-Vergleiche.
+target_column = "duration_computed"
+# Transformation der Zielvariable vor der Modellierung.
+target_transform = "log"
+# Ob die Plotdaten mit Hilfsdaten angereichert werden sollen.
+augment_for_plotting = true
+# Spalte mit den p-Werten im Kontrast-CSV; Werte <= `significance_level` gelten als signifikant.
+significance_column = "p_adj"
+# Schwelle fuer die Signifikanzmarkierung im Violin-/Forest-Plot.
+significance_level = 0.05
+# Obergrenze fuer die y-Achse, wenn lange Zeiten abgeschnitten werden.
+cutoff_years = 10
+# Ab dieser Anzahl von Kategorien wird die dichte Violin-Darstellung verwendet.
+dense_violin_min_levels = 8
+# Breite der Violine im dichten Modus.
+dense_violin_width = 1.1
+# Breite des Box-Overlays im dichten Modus.
+dense_box_width = 0.18
+# Erzwingt die dichte Violin-Darstellung auch bei wenigen Kategorien.
+always_dense_violin_style = true
+# Soll die Forest-Overlay-Ansicht ueber der Violine angezeigt werden.
+show_forest_overlay = true
+# Horizontaler Versatz der Forest-Overlay-Punkte im dichten Modus.
+forest_dense_offset = 0.24
+# Reserviert fuer einen x-Achsentitel; die Kategorien werden aktuell direkt ueber die Tick-Labels gezeigt.
+x_label = ""
+# Beschriftung der y-Achse.
+y_label = "Dauer (Jahre)"
+# Zielordner fuer die erzeugten HTML-Plots.
+out_folder = "int_plots"
+# Basisname fuer die erzeugten Plots.
+out_name = "catcontrast_violins"
+[catcontrast_violins.category_replacements]
+# Ersetzungsregeln fuer Kategoriebezeichnungen im Plot.
+pba_category = { "GER" = "Deutschland", "NEU" = "nicht-EU", "TUB" = "TU Berlin" }
+
+[catcontrast_violins.feature_label_names]
+# Anzeigename fuer das betreffende Feature im Plot.
+institute_name = "Institut"
+# Anzeigename fuer das betreffende Feature im Plot.
+pba_category = "PBA-Kategorie"
+# Anzeigename fuer das betreffende Feature im Plot.
+is_male = "Männlich"
+# Anzeigename fuer das betreffende Feature im Plot.
+pba_grade_missing = "Notenstatus"
+# Anzeigename fuer das betreffende Feature im Plot.
+pba_type = "PBA-Typ"

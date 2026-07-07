@@ -1,0 +1,102 @@
+target_transform = "log" # or boxcox
+
+feature_columns = [
+  [
+    "birth_year",
+    "num",
+  ],
+  [
+    "faculty",
+    "cat",
+  ],
+  [
+    "gender", # preprocess
+    "cat",
+  ],
+  [
+    "has_german_cship",
+    "cat",
+  ],
+  [
+    "has_eu_cship",
+    "cat",
+  ],
+  [
+    "year_first_preac_degree",
+    "num",
+  ],
+  [
+    "preac_state_in_eu",
+    "cat",
+  ],
+  [
+    "firstimma_eu",
+    "cat",
+  ],
+  [
+    "firstimma_year",
+    "num",
+  ],
+  [
+    "pba_type",
+    "cat",
+  ],
+  [
+    "pba_subject",
+    "cat",
+  ],
+  [
+    "pba_year",
+    "num",
+  ],
+  [
+    "pba_grade", # preprocess
+    "num",
+  ],
+  [
+    "phd_subject",
+    "cat",
+  ],
+  [
+    "subject_group_stala",
+    "cat",
+  ],
+  [
+    "subject_group_category_stala",
+    "cat",
+  ],
+  [
+    "acceptance_year",
+    "num",
+  ], # preprocess to cat: pre- during and post covid (additionally)
+  [
+    "defense_year",
+    "num",
+  ], # preprocess to cat: pre- during and post covid (additionally)
+  [
+    "grade_num",
+    "num",
+  ],
+  [
+    "cship_category",
+    "cat",
+  ],
+  [
+    "born_in_eu",
+    "cat",
+  ],
+  [
+    "institute_name",
+    "cat",
+  ],
+  [
+    "pba_category",
+    "cat",
+  ],
+  [
+    "lecode",
+    "cat",
+  ],
+]
+target_column = "duration_computed" # duration_computed for ln-data, else duration_estimate_clipped for the best estimate
+# target_column = "duration_estimate_clipped_simple" # duration_computed for ln-data, else duration_estimate_clipped for the best estimate
