@@ -101,7 +101,7 @@ def add_count_bar_trace(
     return add_bar_trace(fig, customdata=customdata, **kwargs)
 
 
-def aggregate_small_categories_total(cat, n_min):
+def aggregate_small_categories_total(cat, n_min, singular_count_name, count_name):
     """Return the all-faculties category frame with small categories merged into Rest."""
     return aggregate_small_groups(
         cat,
@@ -111,8 +111,8 @@ def aggregate_small_categories_total(cat, n_min):
         total_cols=["year_total"],
         pct_specs=[("pct_of_year_total", "year_total")],
         n_min=n_min,
-        singular_name="Anmeldung",
-        plural_name="Anmeldungen",
+        singular_name=singular_count_name,
+        plural_name=count_name,
     )
 
 
@@ -125,7 +125,7 @@ def finalize_categories_total(cat):
     )
 
 
-def aggregate_small_categories_faculty(cat, n_min):
+def aggregate_small_categories_faculty(cat, n_min, singular_count_name, count_name):
     """Return the per-faculty category frame with small categories merged into Rest."""
     return aggregate_small_groups(
         cat,
@@ -138,8 +138,8 @@ def aggregate_small_categories_faculty(cat, n_min):
             ("pct_of_year_total", "year_total"),
         ],
         n_min=n_min,
-        singular_name="Anmeldung",
-        plural_name="Anmeldungen",
+        singular_name=singular_count_name,
+        plural_name=count_name,
     )
 
 
@@ -187,7 +187,9 @@ def write_year_barplot_interactive_by_category(
         .merge(year_total, on="year", how="left")
     )
     if rest_aggregation:
-        category_total = aggregate_small_categories_total(category_total, n_min)
+        category_total = aggregate_small_categories_total(
+            category_total, n_min, singular_count_name, count_name
+        )
     else:
         category_total = finalize_categories_total(category_total)
 
@@ -203,7 +205,9 @@ def write_year_barplot_interactive_by_category(
         .merge(fac_year_total, on=["year", "faculty"], how="left")
     )
     if rest_aggregation:
-        category_faculty = aggregate_small_categories_faculty(category_faculty, n_min)
+        category_faculty = aggregate_small_categories_faculty(
+            category_faculty, n_min, singular_count_name, count_name
+        )
     else:
         category_faculty = finalize_categories_faculty(category_faculty)
 
@@ -522,8 +526,8 @@ def write_year_barplot_interactive(
             ("pct_of_year_total", "year_total"),
         ],
         n_min=n_min,
-        singular_name="Anmeldung",
-        plural_name="Anmeldungen",
+        singular_name=singular_count_name,
+        plural_name=count_name,
     )
 
     years_sorted = sorted(df["year"].unique())

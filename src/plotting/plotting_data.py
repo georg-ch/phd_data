@@ -16,6 +16,7 @@ def get_singular_count_name(count_name: str) -> str:
         "Anmeldungen": "Anmeldung",
         "Abschluesse": "Abschluss",
         "Abschlüsse": "Abschluss",
+        "Promotionen": "Promotion",
     }
     return singular_map.get(count_name, count_name)
 

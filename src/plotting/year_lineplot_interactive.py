@@ -57,6 +57,7 @@ def add_institute_percentage_trace(
     restcolor: str,
     width_inst: float,
     marker_inst: dict,
+    show_n: bool = False,
 ) -> int:
     """Add one institute percentage line trace to fig and return its trace index, including Rest styling."""
     d = prepare_plot_frame(
@@ -72,7 +73,10 @@ def add_institute_percentage_trace(
     ]
 
     is_rest = institute_name == "Rest"
-    hovertemplate = "%{x}<br>%{meta[0]}<br>%{y:.1%}<br>"
+    hovertemplate = "%{x}<br>%{meta[0]}<br>"
+    if show_n:
+        hovertemplate += "n=%{customdata[1]:,}<br>"
+    hovertemplate += "%{y:.1%}<br>"
     if is_rest:
         hovertemplate += "<br>%{customdata[2]}"
     hovertemplate += "<extra></extra>"
@@ -291,6 +295,7 @@ def write_year_lineplot_interactive(
                 restcolor=restcolor,
                 width_inst=width_inst,
                 marker_inst=marker_inst,
+                show_n=True,
             )
             institute_trace_indices_by_faculty[faculty].append(idx)
             all_institute_trace_indices.append(idx)

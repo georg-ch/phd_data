@@ -301,6 +301,20 @@ out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "region_matrix_barplot"
 
+[study_matrix_def]
+# Filterung Untergrenze (Annahme)
+start_year = 2018
+# Filterung Obergrenze (Annahme)
+end_year = 2025
+
+# Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
+n_min_categories = 5
+
+# Zielordner fuer die erzeugten HTML-Plots.
+out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
+out_name = "region_matrix_barplot_def"
+
 [pbacat_by_year]
 # Filterung Untergrenze (PBA)
 start_year = 2014
@@ -314,6 +328,20 @@ n_min_categories = 5
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "pba_category_by_year"
+
+[pbacat_by_year_def]
+# Filterung Untergrenze (PBA)
+start_year = 2018
+# Filterung Obergrenze (PBA)
+end_year = 2025
+
+# Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
+n_min_categories = 5
+
+# Zielordner fuer die erzeugten HTML-Plots.
+out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
+out_name = "pba_category_by_year_def"
 
 [country_by_year]
 # Filterung Untergrenze (Anmeldung)
@@ -329,6 +357,20 @@ out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "pba_state_by_year"
 
+[country_by_year_def]
+# Filterung Untergrenze (Anmeldung)
+start_year = 2018
+# Filterung Obergrenze (Anmeldung)
+end_year = 2025
+
+# Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
+n_min_categories = 5
+
+# Zielordner fuer die erzeugten HTML-Plots.
+out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
+out_name = "pba_state_by_year_def"
+
 [cship_by_year]
 # Filterung Untergrenze (Anmeldung)
 start_year = 2014
@@ -343,6 +385,21 @@ out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "cship_by_year"
 
+[cship_by_year_def]
+# Filterung Untergrenze (Anmeldung)
+start_year = 2018
+# Filterung Obergrenze (Anmeldung)
+end_year = 2025
+
+# Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
+n_min_categories = 5
+
+# Zielordner fuer die erzeugten HTML-Plots.
+out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
+out_name = "cship_by_year_def"
+
+
 [pbacat_pie]
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
@@ -355,7 +412,7 @@ n_min_institute = 5
 # Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
-out_name = "pba_category"
+out_name = "pba_category_acceptance"
 
 [pbacat_pie.category_label_names]
 TUB = "TU Berlin"
@@ -364,21 +421,21 @@ GER = "Hochschule in Deutschland"
 EU = "Hochschule in Europa"
 NEU = "Hochschule außerhalb Europas"
 
-[pbastate_pie]
-# Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
-start_year = 2014
-# Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
-end_year = 2025
-
-# Wird in diesem Plot derzeit nicht genutzt, weil keine Rest-Aggregation aktiv ist.
-n_min_institute = 5
-
-# Zielordner fuer die erzeugten HTML-Plots.
-out_folder = "int_plots"
-out_name = "pba_cat_pie"
-[pbastate_pie.category_label_names]
-# Platzhalter, weil hier aktuell keine Umbenennung der Kategorien erfolgt.
-0 = 0
+# [pbastate_pie]
+# # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
+# start_year = 2014
+# # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
+# end_year = 2025
+#
+# # Wird in diesem Plot derzeit nicht genutzt, weil keine Rest-Aggregation aktiv ist.
+# n_min_institute = 5
+#
+# # Zielordner fuer die erzeugten HTML-Plots.
+# out_folder = "int_plots"
+# out_name = "pba_cat_pie"
+# [pbastate_pie.category_label_names]
+# # Platzhalter, weil hier aktuell keine Umbenennung der Kategorien erfolgt.
+# 0 = 0
 
 [country_pie]
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -394,7 +451,7 @@ n_biggest_countries = 6
 # Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
-out_name = "pba_state"
+out_name = "pba_state_acceptance"
 [country_pie.category_label_names]
 # Dummy-Wert fuer die Kategorie-Tabelle, falls keine Ersetzungen noetig sind.
 0 = 0
@@ -413,11 +470,30 @@ n_biggest_countries = 6
 # Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
-out_name = "cship"
+out_name = "cship_acceptance"
 [cship_pie.category_label_names]
 # Dummy-Wert fuer die Kategorie-Tabelle, falls keine Ersetzungen noetig sind.
 0 = 0
 
+[cship_pie_def]
+# Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
+start_year = 2018
+# Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
+end_year = 2025
+
+# Wird in diesem Plot derzeit nicht genutzt; die Top-N-Auswahl erfolgt ueber `n_biggest_countries`.
+n_min_country = 0
+# Wie viele der groessten Kategorien im Plot separat gezeigt werden; der Rest landet in "Rest".
+n_biggest_countries = 6
+
+# Zielordner fuer die erzeugten HTML-Plots.
+out_folder = "int_plots"
+# Dateiname des erzeugten Plots.
+out_name = "cship_def"
+
+[cship_pie_def.category_label_names]
+# Dummy-Wert fuer die Kategorie-Tabelle, falls keine Ersetzungen noetig sind.
+0 = 0
 
 [gender_by_year_def]
 # Filterung Untergrenze fuer die Jahresreihe (Verteidigung).

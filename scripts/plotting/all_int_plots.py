@@ -11,8 +11,11 @@ warnings.filterwarnings(
 
 from scripts.plotting.p_acceptance_by_year import main as acceptance_by_year_main
 from scripts.plotting.p_cship_by_year import main as cship_by_year_main
+from scripts.plotting.p_cship_by_year_def import main as cship_by_year_def_main
 from scripts.plotting.p_pba_state_by_year import main as pba_state_by_year_main
+from scripts.plotting.p_pba_state_by_year_def import main as pba_state_by_year_def_main
 from scripts.plotting.p_cship_pie import main as cship_pie_main
+from scripts.plotting.p_cship_pie_def import main as cship_pie_def_main
 from scripts.plotting.p_pba_state_pie import main as pba_state_pie_main
 from scripts.plotting.p_defense_by_year import main as defense_by_year_main
 from scripts.plotting.p_gender_acceptance_by_year import (
@@ -24,6 +27,9 @@ from scripts.plotting.p_gender_defense_by_year import (
 from scripts.plotting.p_sankey_institutes import main as sankey_institutes_main
 from scripts.plotting.p_sankey_faculties import main as sankey_faculties_main
 from scripts.plotting.p_region_matrix_barplot import main as region_matrix_barplot_main
+from scripts.plotting.p_region_matrix_barplot_def import (
+    main as region_matrix_barplot_def_main,
+)
 from scripts.plotting.p_duration_densities import main as duration_densities_main
 from scripts.plotting.p_duration_densities_simple import (
     main as duration_densities_simple_main,
@@ -37,6 +43,9 @@ from scripts.plotting.p_duration_densities_from_start_defense import (
 from scripts.plotting.p_catcontrast_violins import main as catcontrast_violins_main
 from scripts.plotting.p_pba_category_pie import main as pba_category_pie_main
 from scripts.plotting.p_pba_category_by_year import main as pba_category_by_year_main
+from scripts.plotting.p_pba_category_by_year_def import (
+    main as pba_category_by_year_def_main,
+)
 from scripts.plotting.p_gender_regression import main as gender_regression_main
 from scripts.plotting.p_regression_features import main as regression_features_main
 from src.plotting.plot_config import load_plot_config
@@ -47,7 +56,10 @@ PLOT_RUNNERS = [
     defense_by_year_main,
     pba_category_by_year_main,
     pba_state_by_year_main,
+    pba_category_by_year_def_main,
+    pba_state_by_year_def_main,
     cship_by_year_main,
+    cship_by_year_def_main,
     gender_acceptance_by_year_main,
     gender_defense_by_year_main,
     sankey_institutes_main,
@@ -55,8 +67,10 @@ PLOT_RUNNERS = [
     pba_category_pie_main,
     pba_state_pie_main,
     cship_pie_main,
+    cship_pie_def_main,
     gender_regression_main,
     region_matrix_barplot_main,
+    region_matrix_barplot_def_main,
     duration_densities_main,
     duration_densities_simple_main,
     duration_densities_from_start_anchor_main,

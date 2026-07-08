@@ -162,5 +162,4 @@ if __name__ == "__main__":
 # gender effect in choice of subject/institute. /
 # explain gender by institute/subject group / pba_category, grade
 #
-# - git stuff (4)
 # - implement other requests (5)
