@@ -60,4 +60,4 @@ To run the data cleaning pipeline, simply execute
 python -m scripts.pdata_cleaning.generate_cleaned_table [file_name]
 ```
 
-where `file_name` is expected to be an `.xls` file located in `data_dir/` (the suffix is optional in the script argument).
+where `file_name` is expected to be an `.xls` file located in `data/` (the suffix is optional in the script argument).
