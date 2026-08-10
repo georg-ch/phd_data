@@ -167,6 +167,7 @@ def write_year_barplot_interactive_by_category(
     category_name: str,
     category_label_map: dict | None = None,
     rest_aggregation: bool = True,
+    stack_order: list[str] | None = None,
 ):
     """Write a category-based yearly stacked-bar HTML plot with faculty drilldown to out_path."""
     if category_label_map is None:
@@ -211,7 +212,21 @@ def write_year_barplot_interactive_by_category(
     else:
         category_faculty = finalize_categories_faculty(category_faculty)
 
-    category_names = sorted_with_rest(category_total["category_name"].unique())
+    available_category_names = set(category_total["category_name"].unique())
+    preferred_category_names = []
+    for name in stack_order or []:
+        if (
+            name in available_category_names
+            and name != "Rest"
+            and name not in preferred_category_names
+        ):
+            preferred_category_names.append(name)
+    remaining_category_names = sorted(
+        available_category_names - set(preferred_category_names) - {"Rest"}
+    )
+    category_names = preferred_category_names + remaining_category_names
+    if "Rest" in available_category_names:
+        category_names.append("Rest")
 
     category_colors = {
         name: (restcolor if name == "Rest" else color_cycle[i % len(color_cycle)])

@@ -328,6 +328,7 @@ n_min_categories = 5
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "pba_category_by_year"
+stack_order = ["TU Berlin", "FH", "in Deutschland", "in EU", "außerhalb EU"]
 
 [pbacat_by_year_def]
 # Filterung Untergrenze (PBA)
@@ -342,6 +343,7 @@ n_min_categories = 5
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "pba_category_by_year_def"
+stack_order = ["TU Berlin", "FH", "in Deutschland", "in EU", "außerhalb EU"]
 
 [country_by_year]
 # Filterung Untergrenze (Anmeldung)
@@ -356,6 +358,46 @@ n_min_categories = 5
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "pba_state_by_year"
+stack_order = [
+  "Deutschland",
+  "China",
+  "Vereinigtes Königreich",
+  "Islamische Republik Iran",
+  "Frankreich",
+  "Italien",
+  "Indien",
+  "Spanien",
+  "Türkei",
+  "Ägypten",
+  "Russische Föderation",
+  "Niederlande",
+  "Brasilien",
+  "Griechenland",
+  "Österreich",
+  "Pakistan",
+  "Arabische Republik Syrien",
+  "Kolumbien",
+  "Indonesien",
+  "Schweiz",
+  "Republik Korea",
+  "Vereinigte Staaten",
+  "Schweden",
+  "Chile",
+  "Portugal",
+  "Polen",
+  "Belgien",
+  "Japan",
+  "Kanada",
+  "Australien",
+  "Mexiko",
+  "Ukraine",
+  "Israel",
+  "Rumänien",
+  "Vietnam",
+  "Neuseeland",
+  "Argentinien",
+  "Saudi-Arabien",
+]
 
 [country_by_year_def]
 # Filterung Untergrenze (Anmeldung)
@@ -370,6 +412,46 @@ n_min_categories = 5
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "pba_state_by_year_def"
+stack_order = [
+  "Deutschland",
+  "China",
+  "Vereinigtes Königreich",
+  "Islamische Republik Iran",
+  "Frankreich",
+  "Italien",
+  "Indien",
+  "Spanien",
+  "Türkei",
+  "Ägypten",
+  "Russische Föderation",
+  "Niederlande",
+  "Brasilien",
+  "Griechenland",
+  "Österreich",
+  "Pakistan",
+  "Arabische Republik Syrien",
+  "Kolumbien",
+  "Indonesien",
+  "Schweiz",
+  "Republik Korea",
+  "Vereinigte Staaten",
+  "Schweden",
+  "Chile",
+  "Portugal",
+  "Polen",
+  "Belgien",
+  "Japan",
+  "Kanada",
+  "Australien",
+  "Mexiko",
+  "Ukraine",
+  "Israel",
+  "Rumänien",
+  "Vietnam",
+  "Neuseeland",
+  "Argentinien",
+  "Saudi-Arabien",
+]
 
 [cship_by_year]
 # Filterung Untergrenze (Anmeldung)
