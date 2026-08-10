@@ -17,6 +17,7 @@ from scripts.plotting.p_pba_state_by_year_def import main as pba_state_by_year_d
 from scripts.plotting.p_cship_pie import main as cship_pie_main
 from scripts.plotting.p_cship_pie_def import main as cship_pie_def_main
 from scripts.plotting.p_pba_state_pie import main as pba_state_pie_main
+from scripts.plotting.p_pba_state_pie_def import main as pba_state_pie_def_main
 from scripts.plotting.p_defense_by_year import main as defense_by_year_main
 from scripts.plotting.p_gender_acceptance_by_year import (
     main as gender_acceptance_by_year_main,
@@ -42,6 +43,7 @@ from scripts.plotting.p_duration_densities_from_start_defense import (
 )
 from scripts.plotting.p_catcontrast_violins import main as catcontrast_violins_main
 from scripts.plotting.p_pba_category_pie import main as pba_category_pie_main
+from scripts.plotting.p_pba_category_pie_def import main as pba_category_pie_def_main
 from scripts.plotting.p_pba_category_by_year import main as pba_category_by_year_main
 from scripts.plotting.p_pba_category_by_year_def import (
     main as pba_category_by_year_def_main,
@@ -65,7 +67,9 @@ PLOT_RUNNERS = [
     sankey_institutes_main,
     sankey_faculties_main,
     pba_category_pie_main,
+    pba_category_pie_def_main,
     pba_state_pie_main,
+    pba_state_pie_def_main,
     cship_pie_main,
     cship_pie_def_main,
     gender_regression_main,

@@ -6,7 +6,9 @@ from scripts.paths import DATA_DIR
 
 
 def main():
-    params, params_global, out_path = load_plot_config("country_pie", pie_output=True)
+    params, params_global, out_path = load_plot_config(
+        "country_pie_def", pie_output=True
+    )
 
     time_period = (params["start_year"], params["end_year"])
     min_country_count = params["n_min_country"]
@@ -20,7 +22,7 @@ def main():
     data = load_data(DATA_DIR / "clean_data.csv", DATA_DIR / "cleaned_data_dtypes.json")
     df = prepare_yearly_category_counts(
         data,
-        year_col="acceptance_year",
+        year_col="defense_year",
         faculty_col="faculty",
         category_col="pba_state",
         start_year=time_period[0],

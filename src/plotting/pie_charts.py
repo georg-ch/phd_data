@@ -80,14 +80,29 @@ def order_pie_categories_by_size(d):
     )
 
 
-def build_category_colors(category_total, category_faculty, color_cycle, restcolor):
+def build_category_colors(
+    category_total,
+    category_faculty,
+    color_cycle,
+    restcolor,
+    color_order=None,
+):
     """Return a stable label-to-color mapping across the total and faculty pies."""
-    category_names = sorted_with_rest(
-        set(category_total["category_name"]).union(category_faculty["category_name"])
+    category_names = set(category_total["category_name"]).union(
+        category_faculty["category_name"]
     )
+    preferred = []
+    for name in color_order or []:
+        if name in category_names and name != "Rest" and name not in preferred:
+            preferred.append(name)
+    remaining = sorted(category_names - set(preferred) - {"Rest"})
+    ordered_names = preferred + remaining
+    if "Rest" in category_names:
+        ordered_names.append("Rest")
+
     return {
-        name: (restcolor if name == "Rest" else color_cycle[i % len(color_cycle)])
-        for i, name in enumerate(category_names)
+        name: restcolor if name == "Rest" else color_cycle[i % len(color_cycle)]
+        for i, name in enumerate(ordered_names)
     }
 
 
@@ -193,6 +208,7 @@ def write_category_pie_interactive(
     top_n: int | None = None,
     rotation: float = 0,
     order_by_size: bool = False,
+    color_order: list[str] | None = None,
 ):
     """Write a category-based pie chart to ``out_path``."""
     del faculty_colormap
@@ -245,7 +261,11 @@ def write_category_pie_interactive(
         category_faculty = finalize_categories_faculty(category_faculty)
 
     category_colors = build_category_colors(
-        category_total, category_faculty, color_cycle, restcolor
+        category_total,
+        category_faculty,
+        color_cycle,
+        restcolor,
+        color_order=color_order,
     )
     order_categories = (
         order_pie_categories_by_size if order_by_size else order_pie_categories

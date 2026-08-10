@@ -11,6 +11,7 @@ def main():
     time_period = (params["start_year"], params["end_year"])
     min_country_count = params["n_min_country"]
     max_named_countries = params.get("n_biggest_countries")
+    color_order = params.get("color_order")
     category_labels = params["category_label_names"]
     color_cycle = params_global["color_palette_expanded"]
     restcolor = params_global["restcolor"]
@@ -42,6 +43,7 @@ def main():
         top_n=max_named_countries,
         rotation=90,
         order_by_size=True,
+        color_order=color_order,
     )
 
 
