@@ -80,6 +80,21 @@ def order_pie_categories_by_size(d):
     )
 
 
+def order_pie_categories_by_order(d, stack_order):
+    """Return present pie categories in configured order, with missing labels sorted before Rest."""
+    order = {
+        name: i
+        for i, name in enumerate(
+            ordered_with_preference(d["category_name"].unique(), stack_order)
+        )
+    }
+    return (
+        d.assign(_order=d["category_name"].map(order))
+        .sort_values(["_order", "category_name"])
+        .drop(columns="_order")
+    )
+
+
 def build_category_colors(
     category_total,
     category_faculty,
@@ -202,6 +217,7 @@ def write_category_pie_interactive(
     rotation: float = 0,
     order_by_size: bool = False,
     color_order: list[str] | None = None,
+    stack_order: list[str] | None = None,
 ):
     """Write a category-based pie chart to ``out_path``."""
     del faculty_colormap
@@ -260,9 +276,14 @@ def write_category_pie_interactive(
         restcolor,
         color_order=color_order,
     )
-    order_categories = (
-        order_pie_categories_by_size if order_by_size else order_pie_categories
-    )
+    if stack_order is not None:
+        order_categories = lambda data: order_pie_categories_by_order(
+            data, stack_order
+        )
+    else:
+        order_categories = (
+            order_pie_categories_by_size if order_by_size else order_pie_categories
+        )
 
     fig = go.Figure()
     total_trace_indices = []

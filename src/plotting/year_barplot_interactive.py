@@ -27,7 +27,6 @@ from src.plotting.plotting_traces import (
     build_faculty_buttons,
     build_trace_visibility,
     prepare_plot_frame,
-    sorted_with_rest,
     ordered_with_preference,
 )
 
@@ -215,20 +214,7 @@ def write_year_barplot_interactive_by_category(
         category_faculty = finalize_categories_faculty(category_faculty)
 
     available_category_names = set(category_total["category_name"].unique())
-    preferred_category_names = []
-    for name in stack_order or []:
-        if (
-            name in available_category_names
-            and name != "Rest"
-            and name not in preferred_category_names
-        ):
-            preferred_category_names.append(name)
-    remaining_category_names = sorted(
-        available_category_names - set(preferred_category_names) - {"Rest"}
-    )
-    category_names = preferred_category_names + remaining_category_names
-    if "Rest" in available_category_names:
-        category_names.append("Rest")
+    category_names = ordered_with_preference(available_category_names, stack_order)
 
     category_color_order = color_order if color_order is not None else stack_order
     color_names = (
@@ -279,7 +265,9 @@ def write_year_barplot_interactive_by_category(
 
     for faculty in faculty_list:
         dff = category_faculty[category_faculty["faculty"] == faculty]
-        faculty_categories = sorted_with_rest(dff["category_name"].unique())
+        faculty_categories = ordered_with_preference(
+            dff["category_name"].unique(), stack_order
+        )
 
         for category in faculty_categories:
             d = prepare_count_bar_frame(
@@ -373,6 +361,7 @@ def write_category_barplot_interactive_by_category(
     x_order: list[str] | None = None,
     legend_title: str = "",
     color_order: list[str] | None = None,
+    stack_order: list[str] | None = None,
 ):
     """Write a categorical stacked-bar HTML plot with faculty drilldown to out_path."""
     missing = [
@@ -389,7 +378,9 @@ def write_category_barplot_interactive_by_category(
 
     total_counts = df.groupby([x_col, stack_col], as_index=False)["count"].sum()
     faculty_counts = df
-    stack_names = sorted_with_rest(total_counts[stack_col].unique())
+    stack_names = ordered_with_preference(
+        total_counts[stack_col].unique(), stack_order
+    )
 
     stack_colors = {
         name: (restcolor if name == "Rest" else color_cycle[i % len(color_cycle)])
@@ -429,7 +420,9 @@ def write_category_barplot_interactive_by_category(
 
     for faculty in faculty_list:
         dff = faculty_counts[faculty_counts["faculty"] == faculty]
-        faculty_stack_names = sorted_with_rest(dff[stack_col].unique())
+        faculty_stack_names = ordered_with_preference(
+            dff[stack_col].unique(), stack_order
+        )
 
         for stack_value in faculty_stack_names:
             d = prepare_count_bar_frame_for_order(
@@ -510,6 +503,7 @@ def write_year_barplot_interactive(
     faculty_colormap,
     remap_inst=True,
     normalize_inst=True,
+    stack_order: list[str] | None = None,
 ):
     """Write an institute-based yearly stacked-bar HTML plot with faculty drilldown to out_path."""
     faculties = build_faculties(faculty_colormap)
@@ -556,6 +550,11 @@ def write_year_barplot_interactive(
 
     years_sorted = sorted(df["year"].unique())
     faculty_list = sorted(df["faculty"].unique(), reverse=True)
+    ordered_faculties = (
+        faculty_list
+        if stack_order is None
+        else ordered_with_preference(faculty_list, stack_order)
+    )
 
     fig = go.Figure()
 
@@ -565,12 +564,12 @@ def write_year_barplot_interactive(
         institute_trace_indices_by_faculty,
         all_institute_trace_indices,
     ) = build_faculty_trace_state(
-        faculty_list,
+        ordered_faculties,
         color_cycle=color_cycle,
         faculty_colormap=faculty_colormap,
     )
 
-    for f in faculty_list:
+    for f in ordered_faculties:
         d = prepare_plot_frame(fac[fac["faculty"] == f], years_sorted)
 
         idx = add_count_bar_trace(
@@ -593,9 +592,11 @@ def write_year_barplot_interactive(
         )
         faculty_trace_indices.append(idx)
 
-    for f in faculty_list:
+    for f in ordered_faculties:
         dff = inst[inst["faculty"] == f]
-        institutes_sorted = sorted_with_rest(dff["institute_name"].unique())
+        institutes_sorted = ordered_with_preference(
+            dff["institute_name"].unique(), stack_order
+        )
 
         for i_name in institutes_sorted:
             d = prepare_count_bar_frame(
@@ -647,13 +648,13 @@ def write_year_barplot_interactive(
     )
     vis_inst_by_fac, showleg_inst_by_fac = build_faculty_visibility_maps(
         n_traces=n_traces,
-        faculty_list=faculty_list,
+        faculty_list=ordered_faculties,
         trace_indices_by_faculty=institute_trace_indices_by_faculty,
     )
 
     buttons_top, button_index_by_faculty = build_faculty_buttons(
         all_label="Fakultät: alle",
-        faculty_list=faculty_list,
+        faculty_list=ordered_faculties,
         vis_default=vis_faculty,
         showleg_default=showleg_faculty,
         vis_by_faculty=vis_inst_by_fac,

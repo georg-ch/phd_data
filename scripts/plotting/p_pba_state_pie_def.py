@@ -14,6 +14,7 @@ def main():
     min_country_count = params["n_min_country"]
     max_named_countries = params.get("n_biggest_countries")
     color_order = params.get("color_order")
+    stack_order = params.get("stack_order")
     category_labels = params["category_label_names"]
     color_cycle = params_global["color_palette_expanded"]
     restcolor = params_global["restcolor"]
@@ -46,6 +47,7 @@ def main():
         rotation=90,
         order_by_size=True,
         color_order=color_order,
+        stack_order=stack_order,
     )
 
 

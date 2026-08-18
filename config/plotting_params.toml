@@ -288,6 +288,7 @@ out_name = "duration_densities_from_start_defense"
 
 [acc_by_year]
 # Farbquelle: semantisches `global.faculty_institute_mappings`; kein `color_order`.
+# Optionaler `stack_order` fuer die Fakultetsreihen und die Institute im Drilldown.
 # Filterung Untergrenze (Annahme)
 start_year = 2014
 # Filterung Obergrenze (Annahme)
@@ -303,6 +304,7 @@ out_name = "acceptance_by_year"
 
 [def_by_year]
 # Farbquelle: semantisches `global.faculty_institute_mappings`; kein `color_order`.
+# Optionaler `stack_order` fuer die Fakultetsreihen und die Institute im Drilldown.
 # Filterung Untergrenze (Verteidigung)
 start_year = 2018
 # Filterung Obergrenze (Verteidigung)
@@ -580,6 +582,7 @@ stack_order = [
 
 [cship_by_year]
 # Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
+# Optionaler `stack_order` fuer die sichtbare Reihenfolge der Laenderstapel.
 # Filterung Untergrenze (Anmeldung)
 start_year = 2014
 # Filterung Obergrenze (Anmeldung)
@@ -633,9 +636,11 @@ color_order = [
   "Argentinien",
   "Saudi-Arabien",
 ]
+stack_order = ["Deutschland", "China"]
 
 [cship_by_year_def]
 # Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
+# Optionaler `stack_order` fuer die sichtbare Reihenfolge der Laenderstapel.
 # Filterung Untergrenze (Anmeldung)
 start_year = 2018
 # Filterung Obergrenze (Anmeldung)
@@ -693,6 +698,7 @@ color_order = [
 
 [pbacat_pie]
 # Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
+# Optionaler `stack_order` fuer die Reihenfolge der Pie-Slices; `Rest` bleibt zuletzt.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
 # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -723,6 +729,7 @@ NEU = "Hochschule außerhalb Europas"
 
 [pbacat_pie_def]
 # Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
+# Optionaler `stack_order` fuer die Reihenfolge der Pie-Slices; `Rest` bleibt zuletzt.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
 # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -770,6 +777,7 @@ NEU = "Hochschule außerhalb Europas"
 [country_pie]
 # Farbquelle: `global.color_palette_expanded` plus `color_order` unten;
 # `Rest` nutzt `global.restcolor`.
+# Optionaler `stack_order` fuer die Reihenfolge der Pie-Slices; `Rest` bleibt zuletzt.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
 # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -832,6 +840,7 @@ out_name = "pba_state_acceptance"
 [country_pie_def]
 # Farbquelle: `global.color_palette_expanded` plus `color_order` unten;
 # `Rest` nutzt `global.restcolor`.
+# Optionaler `stack_order` fuer die Reihenfolge der Pie-Slices; `Rest` bleibt zuletzt.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
 # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -894,6 +903,7 @@ out_name = "pba_state_def"
 [cship_pie]
 # Farbquelle: `global.color_palette_expanded` plus `color_order` unten;
 # `Rest` nutzt `global.restcolor`.
+# Optionaler `stack_order` fuer die Reihenfolge der Pie-Slices; `Rest` bleibt zuletzt.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
 # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -956,6 +966,7 @@ out_name = "cship_acceptance"
 [cship_pie_def]
 # Farbquelle: `global.color_palette_expanded` plus `color_order` unten;
 # `Rest` nutzt `global.restcolor`.
+# Optionaler `stack_order` fuer die Reihenfolge der Pie-Slices; `Rest` bleibt zuletzt.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2018
 # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.

@@ -10,6 +10,7 @@ def main():
 
     time_period = (params["start_year"], params["end_year"])
     n_min = params["n_min_institute"]
+    stack_order = params.get("stack_order")
     color_cycle = params_global["color_palette_expanded"]
     restcolor = params_global["restcolor"]
     faculty_colormap = params_global["faculty_institute_mappings"]
@@ -33,6 +34,7 @@ def main():
         color_cycle=color_cycle,
         restcolor=restcolor,
         faculty_colormap=faculty_colormap,
+        stack_order=stack_order,
     )
 
 

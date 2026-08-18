@@ -11,6 +11,7 @@ def main():
     time_period = (params["start_year"], params["end_year"])
     min_category_count = params["n_min_institute"]
     color_order = params.get("color_order")
+    stack_order = params.get("stack_order")
     pba_category_labels = params["category_label_names"]
     color_cycle = params_global["color_cycle"]
     restcolor = params_global["restcolor"]
@@ -40,6 +41,7 @@ def main():
         category_label_map=None,
         rest_aggregation=False,
         color_order=color_order,
+        stack_order=stack_order,
     )
 
 

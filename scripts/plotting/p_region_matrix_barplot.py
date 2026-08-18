@@ -18,6 +18,7 @@ def main():
     color_cycle = params_global["color_palette_expanded"]
     restcolor = params_global["restcolor"]
     color_order = params.get("color_order")
+    stack_order = params.get("stack_order")
     faculty_colormap = params_global["faculty_institute_mappings"]
     citizenship_category_labels = {
         "GER": "Deutschland",
@@ -58,6 +59,7 @@ def main():
         ],
         legend_title="Staatsangehörigkeit<br>",
         color_order=color_order,
+        stack_order=stack_order,
     )
 
 
