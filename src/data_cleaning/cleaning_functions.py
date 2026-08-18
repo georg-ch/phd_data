@@ -1,11 +1,18 @@
 import pandas as pd
 import json
+import tomllib
 from tqdm import tqdm
 import re
 from src.data_processing.duration_preprocessing import add_merge_linkedin_data
 from pandas.api.types import is_numeric_dtype, is_bool_dtype, is_datetime64_any_dtype
 from dataclasses import dataclass
 from pathlib import Path
+
+
+# Ordered fallback sources used when the derived institute/faculty assignment
+# is inconsistent.  Keep this list configurable here so the cleaning rule is
+# explicit and easy to adjust without changing the cleaning pipeline.
+INSTITUTE_FACULTY_FALLBACKS = ("ref1", "chair", "ref2", "ref3")
 
 
 @dataclass
@@ -631,7 +638,11 @@ def commit_issue_data(
 
 
 def build_cleaned_table(
-    df, keep_original=False, resource_path=Path("resources"), data_path=Path("data")
+    df,
+    keep_original=False,
+    resource_path=Path("resources"),
+    data_path=Path("data"),
+    faculty_institute_mappings=None,
 ):
     """
     Build a cleaned version of the input DataFrame.
@@ -647,6 +658,12 @@ def build_cleaned_table(
         TODO: description of all columns
     """
     resources = load_resources(resource_path, data_path)
+    if faculty_institute_mappings is None:
+        mapping_path = resource_path / "inst_fac_mapping.toml"
+        with mapping_path.open("rb") as config_file:
+            faculty_institute_mappings = tomllib.load(config_file)[
+                "faculty_institute_mappings"
+            ]
     cols = get_cols(df)
 
     # each key is the name of the cleaned column. Its value
@@ -1108,10 +1125,15 @@ def build_cleaned_table(
     full_dset_list = [
         (remove_duplicates, ()),  # should be first in the list
         (
+            repair_institute_faculty_mismatches,
+            (faculty_institute_mappings, data_path / "mismatch.csv"),
+        ),
+        (
             merge_linf_duration,
             (data_path / "20250821_PromAbschluesse2000_2020_TUB.csv",),
         ),
         (add_merge_linkedin_data, (data_path / "durations.csv",)),
+        (apply_manual_changes, (resource_path / "manual_changes.csv",)),
         (remove_duplicates, ()),  # added as last step due to potential reduplication
     ]
 
@@ -1272,6 +1294,167 @@ def remove_duplicates(df):
     dup_pagins = df[dupmask]["pagination_nr"].unique()
     print(f"Found duplicate pagination numbers: {dup_pagins}")
     return df[~dupmask].reset_index(drop=True)
+
+
+def repair_institute_faculty_mismatches(
+    df,
+    faculty_institute_mappings,
+    mismatch_output_path=None,
+    fallback_order=INSTITUTE_FACULTY_FALLBACKS,
+):
+    """Repair inconsistent institute/faculty pairs using ordered source pairs.
+
+    A fallback is accepted only when its institute is listed for the row's
+    faculty and both its institute name and lecode are non-empty.  The two
+    target columns are always updated together.  Rows with an already valid
+    institute/faculty pair are left unchanged.
+    """
+    faculty_sets = {
+        faculty: set(mapping.get("institute_colors", {}))
+        for faculty, mapping in faculty_institute_mappings.items()
+    }
+
+    def nonempty(series):
+        return series.astype("string").fillna("").str.strip().ne("")
+
+    current_institute = df["institute_name"]
+    current_nonempty = nonempty(current_institute)
+    current_valid = pd.Series(
+        [
+            institute in faculty_sets.get(faculty, set())
+            for faculty, institute in zip(df["faculty"], current_institute)
+        ],
+        index=df.index,
+    )
+    mismatch_mask = current_nonempty & ~current_valid
+
+    audit_columns = [
+        "pagination_nr",
+        "original_institute",
+        "original_faculty",
+        "replaced_by",
+        "new_institute",
+    ]
+    audit_rows = []
+
+    if not mismatch_mask.any():
+        if mismatch_output_path is not None:
+            pd.DataFrame(columns=audit_columns).to_csv(
+                mismatch_output_path, index=False
+            )
+        return df
+
+    repaired = df.copy()
+    for index in df.index[mismatch_mask]:
+        faculty = df.at[index, "faculty"]
+        allowed_institutes = faculty_sets.get(faculty, set())
+        replacement = None
+
+        for source in fallback_order:
+            institute_col = f"{source}_institute_name"
+            lecode_col = f"{source}_lecode"
+            if institute_col not in df.columns or lecode_col not in df.columns:
+                raise KeyError(
+                    f"Fallback source {source!r} requires columns "
+                    f"{institute_col!r} and {lecode_col!r}."
+                )
+
+            institute = df.at[index, institute_col]
+            lecode = df.at[index, lecode_col]
+            if (
+                nonempty(df[institute_col]).at[index]
+                and nonempty(df[lecode_col]).at[index]
+                and institute in allowed_institutes
+            ):
+                replacement = (institute, lecode)
+                replacement_source = source
+                break
+
+        if replacement is None:
+            replacement_source = "empty"
+            repaired.at[index, "institute_name"] = pd.NA
+            repaired.at[index, "lecode"] = pd.NA
+        else:
+            repaired.at[index, "institute_name"] = replacement[0]
+            repaired.at[index, "lecode"] = replacement[1]
+
+        audit_rows.append(
+            {
+                "pagination_nr": df.at[index, "pagination_nr"],
+                "original_institute": df.at[index, "institute_name"],
+                "original_faculty": df.at[index, "faculty"],
+                "replaced_by": replacement_source,
+                "new_institute": (
+                    replacement[0] if replacement is not None else pd.NA
+                ),
+            }
+        )
+
+    if mismatch_output_path is not None:
+        pd.DataFrame(audit_rows, columns=audit_columns).to_csv(
+            mismatch_output_path, index=False
+        )
+
+    return repaired
+
+
+def apply_manual_changes(df, changes_path):
+    """Apply the explicitly listed cell changes from a semicolon CSV file."""
+    changes = pd.read_csv(
+        changes_path,
+        sep=";",
+        encoding="utf-8-sig",
+        dtype={
+            "pagination_nr": "string",
+            "field_name": "string",
+            "new_value": "string",
+        },
+        keep_default_na=False,
+    )
+    required_columns = {"pagination_nr", "field_name", "new_value"}
+    if set(changes.columns) != required_columns:
+        raise ValueError(
+            f"Manual changes must have exactly these columns: {sorted(required_columns)}"
+        )
+
+    changes["field_name"] = changes["field_name"].replace(
+        {"Institute_name": "institute_name"}
+    )
+    unknown_fields = sorted(set(changes["field_name"]) - set(df.columns))
+    if unknown_fields:
+        raise KeyError(f"Manual changes contain unknown fields: {unknown_fields}")
+
+    pagination_as_string = df["pagination_nr"].astype("string")
+    unknown_rows = sorted(
+        set(changes["pagination_nr"]) - set(pagination_as_string.dropna())
+    )
+    if unknown_rows:
+        raise KeyError(
+            f"Manual changes contain unknown pagination numbers: {unknown_rows}"
+        )
+
+    duplicate_keys = ["pagination_nr", "field_name"]
+    conflicting_duplicates = (
+        changes.groupby(duplicate_keys, dropna=False)["new_value"].nunique()
+        .gt(1)
+        .any()
+    )
+    if conflicting_duplicates:
+        raise ValueError(
+            "Manual changes contain conflicting duplicate pagination/field entries"
+        )
+    changes = changes.drop_duplicates(duplicate_keys, keep="first")
+
+    changed = df.copy()
+    row_indices = pagination_as_string.reset_index().set_index("pagination_nr")[
+        "index"
+    ]
+    for change in changes.itertuples(index=False):
+        index = row_indices[change.pagination_nr]
+        value = change.new_value if change.new_value != "" else pd.NA
+        changed.at[index, change.field_name] = value
+
+    return changed
 
 
 def merge_linf_duration(df, linf_csv_path):
