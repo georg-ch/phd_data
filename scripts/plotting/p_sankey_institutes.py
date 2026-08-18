@@ -20,6 +20,7 @@ def main():
     node_thickness = params["node_thickness"]
     faculty_colormap = params_global["faculty_institute_mappings"]
     faculties = build_faculties(params_global["faculty_institute_mappings"])
+    category_label_map = params.get("category_label_names", {})
 
     data = load_data(DATA_DIR / "clean_data.csv", DATA_DIR / "cleaned_data_dtypes.json")
     df = data[
@@ -49,6 +50,7 @@ def main():
         link_alpha=link_alpha,
         node_thickness=node_thickness,
         faculty_colormap=faculty_colormap,
+        category_label_map=category_label_map,
     )
 
 

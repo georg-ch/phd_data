@@ -2,6 +2,7 @@ from src.data_loading.load_data import load_data
 from src.plotting.plot_config import load_plot_config
 from src.plotting.plotting_data import (
     PBA_CATEGORY_LABELS as category_code_labels,
+    merge_category_label_maps,
     prepare_yearly_category_counts,
 )
 from src.plotting.year_barplot_interactive import (
@@ -17,6 +18,9 @@ def main():
     min_category_count = params["n_min_categories"]
     color_order = params.get("color_order")
     stack_order = params.get("stack_order")
+    category_label_map = merge_category_label_maps(
+        category_code_labels, params.get("category_label_names")
+    )
     color_cycle = params_global["color_palette_expanded"]
     restcolor = params_global["restcolor"]
     faculty_colormap = params_global["faculty_institute_mappings"]
@@ -29,7 +33,7 @@ def main():
         category_col="citizenship",
         start_year=time_period[0],
         end_year=time_period[1],
-        category_label_map=category_code_labels,
+        category_label_map=category_label_map,
     )
 
     write_year_barplot_interactive_by_category(

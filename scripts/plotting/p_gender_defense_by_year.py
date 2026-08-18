@@ -13,6 +13,7 @@ def main():
     restcolor = params_global["restcolor"]
     fac_total_color = params_global["fac_in_inst_color"]
     faculty_colormap = params_global["faculty_institute_mappings"]
+    category_label_map = params.get("category_label_names", {})
 
     marker_fac = dict(
         size=params["marker_fac_size"], symbol="circle", line=dict(width=1)
@@ -65,6 +66,7 @@ def main():
         width_inst=params["width_inst"],
         width_fac_total=params["width_fac_in_inst"],
         fac_total_color=fac_total_color,
+        category_label_map=category_label_map,
     )
 
 

@@ -34,6 +34,13 @@ def prepare_category_frame(
     return df
 
 
+def merge_category_label_maps(default_map=None, configured_map=None) -> dict:
+    """Return default category labels with optional configured labels overriding them."""
+    labels = dict(default_map or {})
+    labels.update(configured_map or {})
+    return labels
+
+
 def build_faculties(faculty_institute_mappings: dict) -> dict[str, list[str]]:
     """Return a sorted faculty-to-institute-name mapping derived from the color config."""
     faculties = {}

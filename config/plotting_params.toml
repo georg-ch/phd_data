@@ -54,8 +54,20 @@ subject_groups = [
   "Sozial- und Verhaltenswissenschaften, Sport",
 ]
 
+# Farbzuordnung fuer Dauer- und Startdichteplots; die Indizes beziehen sich auf die `global.color_cycle`-Palette.
+[global.duration_color_indices]
+linkedin = 0
+defense_minus_acceptance = 1
+model = 2
+defense_minus_pba = 3
+
+[global.start_duration_color_indices]
+linkedin_start = 0
+model_start = 2
+model_start_clipped = 3
+
 [global.faculty_institute_mappings."Fakultät I"]
-# Semantische Farbquelle fuer Fakulteten/Institute: `color`-Indizes waehlen aus `global.color_cycle`.
+# farbmapping fuer Fakulteten/Institute: `color`-Indizes waehlen aus `global.color_cycle`.
 # Index der Hauptfarbe fuer diese Fakultaet.
 color = 0
 
@@ -150,14 +162,13 @@ color = 6
 "Zentrum für Astronomie und Astrophysik" = "Institut für Physik und Astronomie"
 
 [palette_preview]
-# Standalone preview of the configured standard and expanded palettes.
-out_folder = "int_plots"
+# Fuer preview-plot der Farbpaletten
+# out_folder = "int_plots"
 out_name = "color_palette_preview"
 
 [duration_densities]
-# Farbquelle: `global.color_cycle` mit fester Bedeutung je Modell-/Datenreihe;
-# kein `color_order`.
 # Nutzt Modell statt Rohdaten fuer die LinkedIn-Dauer, aber nur wenn die Modellkurve nicht ohnehin gemeinsam mit LinkedIn gezeigt wird.
+# Farbquelle: `global.color_cycle` und `global.duration_color_indices`
 use_model = false
 # Zeigt LinkedIn- und Modellkurve gemeinsam an.
 show_linkedin_and_model = true
@@ -181,9 +192,8 @@ out_folder = "int_plots"
 out_name = "total_dur_densities"
 
 [duration_densities_simple]
-# Farbquelle: `global.color_cycle` mit fester Bedeutung je Modell-/Datenreihe;
-# kein `color_order`.
 # Nutzt die vereinfachte Schaetzung statt der Modell-Variante aus den normalen Durations-Plots.
+# Farbquelle: `global.color_cycle` und `global.duration_color_indices`
 use_model = false
 # Zeigt LinkedIn- und vereinfachte Schaetzung gemeinsam an.
 show_linkedin_and_model = true
@@ -207,8 +217,7 @@ out_folder = "int_plots"
 out_name = "total_dur_densities_simple"
 
 [start_densities_anchor]
-# Farbquelle: `global.color_cycle` mit fester Bedeutung je Modell-/Datenreihe;
-# kein `color_order`.
+# Farbquelle: `global.color_cycle` und `global.start_duration_color_indices`;
 # Erzwingt die kompakte Violin-Darstellung auch fuer wenige Kategorien.
 always_dense_violin_style = true
 # Breite der Violine im kompakten Modus.
@@ -235,9 +244,9 @@ out_folder = "int_plots"
 out_name = "start_densities_defense"
 
 [duration_densities_from_start_anchor]
-# Farbquelle: `global.color_cycle` mit fester Bedeutung je Modell-/Datenreihe;
-# kein `color_order`.
 # Nutzt das Modell statt der Rohdaten fuer die LinkedIn-Dauer, aber nur wenn die Modellkurve nicht ohnehin gemeinsam mit LinkedIn gezeigt wird.
+# Dauer geschaetzt basierend auf startdatum geschatzt auf basis von PBA und ACC
+# Farbquelle: `global.color_cycle` und global.duration_color_indices`;
 use_model = false
 # Zeigt LinkedIn- und Modellkurve gemeinsam an.
 show_linkedin_and_model = true
@@ -261,9 +270,9 @@ out_folder = "int_plots"
 out_name = "duration_densities_from_start_anchor"
 
 [duration_densities_from_start_defense]
-# Farbquelle: `global.color_cycle` mit fester Bedeutung je Modell-/Datenreihe;
-# kein `color_order`.
+# Farbquelle: `global.color_cycle` und global.duration_color_indices`;
 # Nutzt das Modell statt der Rohdaten fuer die LinkedIn-Dauer, aber nur wenn die Modellkurve nicht ohnehin gemeinsam mit LinkedIn gezeigt wird.
+# Startdatum gescahetzt basierend auf Verteidigung minus Dauer
 use_model = false
 # Zeigt LinkedIn- und Modellkurve gemeinsam an.
 show_linkedin_and_model = true
@@ -287,8 +296,9 @@ out_folder = "int_plots"
 out_name = "duration_densities_from_start_defense"
 
 [acc_by_year]
-# Farbquelle: semantisches `global.faculty_institute_mappings`; kein `color_order`.
-# Optionaler `stack_order` fuer die Fakultetsreihen und die Institute im Drilldown.
+# Annahme/Jahr Barplot
+# Farbquelle: semantisches `global.faculty_institute_mappings`; 
+# Optionale `stack_order` fuer die Fakultetsreihen und die Institute im Drilldown.
 # Filterung Untergrenze (Annahme)
 start_year = 2014
 # Filterung Obergrenze (Annahme)
@@ -301,10 +311,14 @@ n_min_institute = 5
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "acceptance_by_year"
+# Optional: Anzeigeumbenennungen; die Schluessel bleiben die Originalnamen.
+# [acc_by_year.category_label_names]
+# "Fakultät I" = "Neue Bezeichnung"
 
 [def_by_year]
+# Verteidigung/Jahr Barplot
 # Farbquelle: semantisches `global.faculty_institute_mappings`; kein `color_order`.
-# Optionaler `stack_order` fuer die Fakultetsreihen und die Institute im Drilldown.
+# Optionale `stack_order` fuer die Fakultetsreihen und die Institute im Drilldown.
 # Filterung Untergrenze (Verteidigung)
 start_year = 2018
 # Filterung Obergrenze (Verteidigung)
@@ -317,8 +331,12 @@ n_min_institute = 5
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "defense_by_year"
+# Optional: Anzeigeumbenennungen wie bei `acc_by_year.category_label_names`.
+# [def_by_year.category_label_names]
+# "Fakultät I" = "Neue Bezeichnung"
 
 [study_matrix]
+# Studienort Barplot (Anmeldung)
 # Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze (Annahme)
 start_year = 2014
@@ -333,12 +351,16 @@ out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "region_matrix_barplot"
 color_order = ["Deutschland", "EU-Ausland", "Nicht-EU-Ausland"]
+# Optional: gemeinsame Umbenennungen fuer die Originalcodes beider Kategorien.
+# [study_matrix.category_label_names]
+# GER = "Deutschland"
 
 [study_matrix_def]
+# Studienort Barplot (Verteidigung)
 # Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
-# Filterung Untergrenze (Annahme)
+# Filterung Untergrenze (Verteidigung)
 start_year = 2018
-# Filterung Obergrenze (Annahme)
+# Filterung Obergrenze (Verteidigung)
 end_year = 2025
 
 # Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
@@ -349,13 +371,19 @@ out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "region_matrix_barplot_def"
 color_order = ["Deutschland", "EU-Ausland", "Nicht-EU-Ausland"]
+# Optional: Umbenennungen wie bei `study_matrix.category_label_names`.
+# [study_matrix_def.category_label_names]
+# GER = "Deutschland"
 
 [pbacat_by_year]
+# PBA-Kategorie nach Jahr Barplot, Annahme
 # Farbquelle: `global.color_cycle` plus `color_order` unten; `stack_order` steuert zusaetzlich
-# die Stapel-/Trace-Reihenfolge; `Rest` nutzt `global.restcolor`.
-# Filterung Untergrenze (PBA)
+# die Stapel-Reihenfolge; `Rest` nutzt `global.restcolor`.
+# Optional: Umbenennungen der Originalcodes via pbacat_by_year.category_label_names. `color_order` und `stack_order` muessen
+# danach die neuen Anzeigenamen verwenden.
+# Filterung Untergrenze (Annahme)
 start_year = 2014
-# Filterung Obergrenze (PBA)
+# Filterung Obergrenze (Annahme)
 end_year = 2025
 
 # Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
@@ -368,12 +396,16 @@ out_name = "pba_category_by_year"
 color_order = ["TU Berlin", "FH", "in Deutschland", "in EU", "außerhalb EU"]
 stack_order = ["TU Berlin", "FH", "in Deutschland", "in EU", "außerhalb EU"]
 
+[pbacat_by_year.category_label_names]
+"FH" = "Fachhochschule"
+
 [pbacat_by_year_def]
+# PBA-Kategorie nach Jahr Barplot, Verteidigigung
 # Farbquelle: `global.color_cycle` plus `color_order` unten; `stack_order` steuert zusaetzlich
-# die Stapel-/Trace-Reihenfolge; `Rest` nutzt `global.restcolor`.
-# Filterung Untergrenze (PBA)
+# die Stapel-Reihenfolge; `Rest` nutzt `global.restcolor`.
+# Filterung Untergrenze (Verteidigung)
 start_year = 2018
-# Filterung Obergrenze (PBA)
+# Filterung Obergrenze (Verteidigung)
 end_year = 2025
 
 # Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
@@ -385,17 +417,23 @@ out_folder = "int_plots"
 out_name = "pba_category_by_year_def"
 color_order = ["TU Berlin", "FH", "in Deutschland", "in EU", "außerhalb EU"]
 stack_order = ["TU Berlin", "FH", "in Deutschland", "in EU", "außerhalb EU"]
-
+# Optional: Umbenennungen wie bei `pbacat_by_year.category_label_names`.
+# [pbacat_by_year_def.category_label_names]
+# "FH"" = "Fachhochschule"
+#
 [country_by_year]
+# Barplot PBA-Land nach Jahr (Anmeldung)
 # Farbquelle: `global.color_cycle` plus `color_order` unten; `stack_order` steuert zusaetzlich
-# die Stapel-/Trace-Reihenfolge; `Rest` nutzt `global.restcolor`.
+# die Stapel-Reihenfolge; `Rest` nutzt `global.restcolor`.
+# Optional: Umbenennungen der Originalcodes; danach muessen `color_order` und
+# `stack_order` die neuen Anzeigenamen verwenden.
 # Filterung Untergrenze (Anmeldung)
 start_year = 2014
 # Filterung Obergrenze (Anmeldung)
 end_year = 2025
 
 # Mindestanzahl pro Jahr; 6 ergibt hier hoechstens 24 benannte Kategorien
-# und passt damit in die erweiterte 16-Farben-Palette.
+# und passt damit in die erweiterte 24-Farben-Palette.
 n_min_categories = 6
 
 # Zielordner fuer die erzeugten HTML-Plots.
@@ -482,17 +520,21 @@ stack_order = [
   "Argentinien",
   "Saudi-Arabien",
 ]
+# [country_by_year.category_label_names]
+# "Deutschland" = "Allemande"
 
 [country_by_year_def]
+# Barplot PBA-Land nach Jahr (Verteidigung)
 # Farbquelle: `global.color_cycle` plus `color_order` unten; `stack_order` steuert zusaetzlich
-# die Stapel-/Trace-Reihenfolge; `Rest` nutzt `global.restcolor`.
-# Filterung Untergrenze (Anmeldung)
+# die Stapel-Reihenfolge; `Rest` nutzt `global.restcolor`.
+# Optional: Umbenennungen wie bei `country_by_year.category_label_names`.
+# Filterung Untergrenze (Verteidigung)
 start_year = 2018
-# Filterung Obergrenze (Anmeldung)
+# Filterung Obergrenze (Verteidigung)
 end_year = 2025
 
 # Mindestanzahl pro Jahr; 6 ergibt hier hoechstens 24 benannte Kategorien
-# und passt damit in die erweiterte 16-Farben-Palette.
+# und passt damit in die erweiterte 24-Farben-Palette.
 n_min_categories = 6
 
 # Zielordner fuer die erzeugten HTML-Plots.
@@ -579,17 +621,22 @@ stack_order = [
   "Argentinien",
   "Saudi-Arabien",
 ]
+# [country_by_year_def.category_label_names]
+# "Deutschland" = "Allemande"
 
 [cship_by_year]
+# Staatsangehoerigkeit nach Jahr Barplot (Anmeldung)
 # Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
-# Optionaler `stack_order` fuer die sichtbare Reihenfolge der Laenderstapel.
+# Optionale `stack_order` fuer die sichtbare Reihenfolge der Laenderstapel.
+# Optional: Umbenennungen der Originalcodes; danach muessen `color_order` und
+# `stack_order` die neuen Anzeigenamen verwenden.
 # Filterung Untergrenze (Anmeldung)
 start_year = 2014
 # Filterung Obergrenze (Anmeldung)
 end_year = 2025
 
 # Mindestanzahl pro Jahr; 6 ergibt hier hoechstens 24 benannte Kategorien
-# und passt damit in die erweiterte 16-Farben-Palette.
+# und passt damit in die erweiterte 24-Farben-Palette.
 n_min_categories = 6
 
 # Zielordner fuer die erzeugten HTML-Plots.
@@ -637,17 +684,20 @@ color_order = [
   "Saudi-Arabien",
 ]
 stack_order = ["Deutschland", "China"]
+# [cship_by_year.category_label_names]
+# GER = "Deutschland"
 
 [cship_by_year_def]
 # Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
 # Optionaler `stack_order` fuer die sichtbare Reihenfolge der Laenderstapel.
-# Filterung Untergrenze (Anmeldung)
+# Optional: Umbenennungen wie bei `cship_by_year.category_label_names`.
+# Filterung Untergrenze (Verteidigung)
 start_year = 2018
-# Filterung Obergrenze (Anmeldung)
+# Filterung Obergrenze (Verteidigung)
 end_year = 2025
 
 # Mindestanzahl pro Jahr; 6 ergibt hier hoechstens 24 benannte Kategorien
-# und passt damit in die erweiterte 16-Farben-Palette.
+# und passt damit in die erweiterte 24-Farben-Palette.
 n_min_categories = 6
 
 # Zielordner fuer die erzeugten HTML-Plots.
@@ -694,9 +744,12 @@ color_order = [
   "Argentinien",
   "Saudi-Arabien",
 ]
+# [cship_by_year_def.category_label_names]
+# "Deutschland" = "Allemande"
 
 
 [pbacat_pie]
+# PBA Kuchenplot (Anmeldung)
 # Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
 # Optionaler `stack_order` fuer die Reihenfolge der Pie-Slices; `Rest` bleibt zuletzt.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -728,6 +781,7 @@ EU = "Hochschule in Europa"
 NEU = "Hochschule außerhalb Europas"
 
 [pbacat_pie_def]
+# PBA Kuchenplot (Verteidigung)
 # Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
 # Optionaler `stack_order` fuer die Reihenfolge der Pie-Slices; `Rest` bleibt zuletzt.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -758,23 +812,8 @@ GER = "Hochschule in Deutschland"
 EU = "Hochschule in Europa"
 NEU = "Hochschule außerhalb Europas"
 
-# [pbastate_pie]
-# # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
-# start_year = 2014
-# # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
-# end_year = 2025
-#
-# # Wird in diesem Plot derzeit nicht genutzt, weil keine Rest-Aggregation aktiv ist.
-# n_min_institute = 5
-#
-# # Zielordner fuer die erzeugten HTML-Plots.
-# out_folder = "int_plots"
-# out_name = "pba_cat_pie"
-# [pbastate_pie.category_label_names]
-# # Platzhalter, weil hier aktuell keine Umbenennung der Kategorien erfolgt.
-# 0 = 0
-
 [country_pie]
+# PBA Land Kuchenplot (Anmeldung)
 # Farbquelle: `global.color_palette_expanded` plus `color_order` unten;
 # `Rest` nutzt `global.restcolor`.
 # Optionaler `stack_order` fuer die Reihenfolge der Pie-Slices; `Rest` bleibt zuletzt.
@@ -838,6 +877,7 @@ out_name = "pba_state_acceptance"
 0 = 0
 
 [country_pie_def]
+# PBA Land Kuchenplot (Verteidigung)
 # Farbquelle: `global.color_palette_expanded` plus `color_order` unten;
 # `Rest` nutzt `global.restcolor`.
 # Optionaler `stack_order` fuer die Reihenfolge der Pie-Slices; `Rest` bleibt zuletzt.
@@ -901,9 +941,10 @@ out_name = "pba_state_def"
 0 = 0
 
 [cship_pie]
+# Staatsangehoerigkeit Kuchenplot (Anmeldung)
 # Farbquelle: `global.color_palette_expanded` plus `color_order` unten;
 # `Rest` nutzt `global.restcolor`.
-# Optionaler `stack_order` fuer die Reihenfolge der Pie-Slices; `Rest` bleibt zuletzt.
+# Optionale `stack_order` fuer die Reihenfolge der Pie-Slices; `Rest` bleibt zuletzt.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
 # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -964,6 +1005,7 @@ out_name = "cship_acceptance"
 0 = 0
 
 [cship_pie_def]
+# Staatsangehoerigkeit Kuchenplot (Verteidigung)
 # Farbquelle: `global.color_palette_expanded` plus `color_order` unten;
 # `Rest` nutzt `global.restcolor`.
 # Optionaler `stack_order` fuer die Reihenfolge der Pie-Slices; `Rest` bleibt zuletzt.
@@ -1028,8 +1070,11 @@ out_name = "cship_def"
 0 = 0
 
 [gender_by_year_def]
-# Farbquelle: semantisches `global.faculty_institute_mappings`; Gesamt-/Rest-Reihen
-# nutzen zusaetzlich `global.fac_in_inst_color` bzw. `global.restcolor`; kein `color_order`.
+# Geschlechterverteilung nach Jahr Barplot (Verteidigung)
+# Farbquelle:  `global.faculty_institute_mappings`; Gesamt-/Rest-Reihen
+# nutzen zusaetzlich `global.fac_in_inst_color` bzw. `global.restcolor`; 
+# Optional: Anzeigeumbenennungen fuer Fakultaten/Institute gender_by_year_def.category_label_names; Originalnamen bleiben
+# fuer die semantische Farbzuteilung erhalten.
 # Filterung Untergrenze fuer die Jahresreihe (Verteidigung).
 start_year = 2018
 # Filterung Obergrenze fuer die Jahresreihe (Verteidigung).
@@ -1059,10 +1104,14 @@ width_fac = 4
 width_inst = 4
 width_total = 12
 width_fac_in_inst = 4
+# [gender_by_year_def.category_label_names]
+# "Fakultät I" = "Neue Bezeichnung"
 
 [gender_by_year]
+# Geschlechterverteilung nach Jahr Barplot (Anmeldung)
 # Farbquelle: semantisches `global.faculty_institute_mappings`; Gesamt-/Rest-Reihen
-# nutzen zusaetzlich `global.fac_in_inst_color` bzw. `global.restcolor`; kein `color_order`.
+# nutzen zusaetzlich `global.fac_in_inst_color` bzw. `global.restcolor`; 
+# Optional: Anzeigeumbenennungen wie bei `gender_by_year_def.category_label_names`.
 # Filterung Untergrenze fuer die Jahresreihe (Anmeldung).
 start_year = 2014
 # Filterung Obergrenze fuer die Jahresreihe (Anmeldung).
@@ -1093,10 +1142,15 @@ width_inst = 4
 width_total = 12
 width_fac_in_inst = 4
 
+# [gender_by_year.category_label_names]
+# "Fakultät I" = "Neue Bezeichnung"
 
 [subject]
-# Farbquelle: semantisches `global.faculty_institute_mappings`; Rest nutzt
-# `global.restcolor`; kein `color_order`.
+# Sankey-Plot der Fachgruppen nach Fakultäten und Instituten;
+# Farbquelle: sglobal.faculty_institute_mappings`; Rest nutzt
+# `global.restcolor`; 
+# Optional: Anzeigeumbenennungen fuer Fakultaten, Institute und Fachgruppen subject.category_label_names];
+# Originalnamen bleiben fuer die semantische Farbzuteilung erhalten.
 # Filter Untergrenze fuer die Sankey-Ansicht.
 start_year = 2014
 # Filter Obergrenze fuer die Sankey-Ansicht.
@@ -1110,11 +1164,14 @@ out_name = "sankey_institutes"
 link_alpha = 0.7
 # Breite der Knoten in der Sankey-Darstellung.
 node_thickness = 100
+# [subject.category_label_names]
+# "Fakultät I" = "Neue Bezeichnung"
 
 
 [subject_overview]
 # Farbquelle: semantisches `global.faculty_institute_mappings`; Rest nutzt
-# `global.restcolor`; kein `color_order`.
+# `global.restcolor`; 
+# Optional: Anzeigeumbenennungen wie bei `subject.category_label_names`.
 # Filter Untergrenze 
 start_year = 2014
 # Filter Obergrenze
@@ -1129,6 +1186,8 @@ out_name = "sankey_faculties"
 link_alpha = 0.7
 # Breite der Knoten in der Sankey-Darstellung.
 node_thickness = 100
+# [subject_overview.category_label_names]
+# "Fakultät I" = "Neue Bezeichnung"
 
 [regression]
 # Regressionsparametersektion; die zugehoerigen Effektdiagramme nutzen feste

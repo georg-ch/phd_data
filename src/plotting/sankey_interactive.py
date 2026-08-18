@@ -71,12 +71,17 @@ def write_sankey_subject_groups_interactive(
     node_thickness: int,
     faculty_colormap,
     subject_groups,
+    category_label_map: dict | None = None,
 ):
+    category_label_map = category_label_map or {}
     faculties = build_faculties(faculty_colormap)
     faculty_names = list(faculties.keys())
 
     nodes = ["TU gesamt"] + faculty_names + list(subject_groups)
-    node_labels = [wrap_label(x, wrapping_replacements_subject_groups) for x in nodes]
+    node_labels = [
+        wrap_label(category_label_map.get(x, x), wrapping_replacements_subject_groups)
+        for x in nodes
+    ]
     nodes_dict = dict(
         label=node_labels,
         pad=15,
@@ -89,7 +94,7 @@ def write_sankey_subject_groups_interactive(
         + [faculty_color_for(f, color_cycle, faculty_colormap) for f in faculty_names]
         + [restcolor] * len(subject_groups),
         line=dict(color="rgba(0,0,0,0.15)", width=0.5),
-        customdata=nodes,
+        customdata=[category_label_map.get(x, x) for x in nodes],
         hovertemplate="%{customdata}<extra></extra>",
     )
 
@@ -143,9 +148,7 @@ def write_sankey_subject_groups_interactive(
         target_label = nodes[target]
 
         if source_label in faculty_names and target_label in subject_groups:
-            link_labels.append(
-                f"{value} Promotionen in {target_label} in {source_label}"
-            )
+            link_labels.append(f"{value} Promotionen in {target_label} in {source_label}")
         else:
             link_labels.append(f"{100 * value / tu_total:.2f} % aller Promotionen")
 
@@ -213,7 +216,9 @@ def write_sankey_diag_interactive(
     node_thickness: int,
     faculty_colormap,
     default_faculty: str = "Fakultät I",
+    category_label_map: dict | None = None,
 ):
+    category_label_map = category_label_map or {}
     faculty_list = sorted(df["faculty"].unique(), reverse=True)
 
     fig = go.Figure()
@@ -248,17 +253,26 @@ def write_sankey_diag_interactive(
         stalas = sorted(sub_sta["subject_group_category_stala"].unique().tolist())
 
         inst_labels = [
-            wrap_label(short_institute_label(x), wrapping_replacements_by_faculty)
+            wrap_label(
+                category_label_map.get(x, short_institute_label(x)),
+                wrapping_replacements_by_faculty,
+            )
             for x in institutes
         ]
         subj_labels = [
-            wrap_label(x, wrapping_replacements_by_faculty) for x in subjects
+            wrap_label(category_label_map.get(x, x), wrapping_replacements_by_faculty)
+            for x in subjects
         ]
-        stala_labels = [wrap_label(x, wrapping_replacements_by_faculty) for x in stalas]
+        stala_labels = [
+            wrap_label(category_label_map.get(x, x), wrapping_replacements_by_faculty)
+            for x in stalas
+        ]
 
         labels = inst_labels + subj_labels + stala_labels
         hover_labels = (
-            [short_institute_label(x) for x in institutes] + subjects + stalas
+            [category_label_map.get(x, short_institute_label(x)) for x in institutes]
+            + [category_label_map.get(x, x) for x in subjects]
+            + [category_label_map.get(x, x) for x in stalas]
         )
         node_x = (
             [0.001] * len(institutes) + [0.5] * len(subjects) + [0.999] * len(stalas)
@@ -368,13 +382,13 @@ def write_sankey_diag_interactive(
         idx = trace_index_by_faculty[faculty]
         buttons.append(
             dict(
-                label=short_faculty_label(faculty),
+                label=short_faculty_label(category_label_map.get(faculty, faculty)),
                 method="update",
                 args=[
                     {"visible": vis_only(idx)},
                     {
                         "title": {
-                            "text": f"<u>Fakultät {short_faculty_label(faculty)}</u>",
+                            "text": f"<u>Fakultät {short_faculty_label(category_label_map.get(faculty, faculty))}</u>",
                             "x": 0.12,
                             "y": 0.895,
                             "xanchor": "center",
@@ -387,7 +401,7 @@ def write_sankey_diag_interactive(
 
     fig.update_layout(
         title=dict(
-            text=f"<u>Fakultät {short_faculty_label(default_faculty)}</u>",
+            text=f"<u>Fakultät {short_faculty_label(category_label_map.get(default_faculty, default_faculty))}</u>",
             x=0.12,
             y=0.895,
             xanchor="center",

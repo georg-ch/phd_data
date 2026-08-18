@@ -58,6 +58,8 @@ def add_institute_percentage_trace(
     width_inst: float,
     marker_inst: dict,
     show_n: bool = False,
+    display_label: str | None = None,
+    display_meta_label: str | None = None,
 ) -> int:
     """Add one institute percentage line trace to fig and return its trace index, including Rest styling."""
     d = prepare_plot_frame(
@@ -85,8 +87,8 @@ def add_institute_percentage_trace(
         fig,
         x=d["year"],
         y=d["female_percentage"],
-        name=short_institute_label(institute_name),
-        meta=[institute_name],
+        name=display_label or short_institute_label(institute_name),
+        meta=[display_meta_label or institute_name],
         legendgroup=faculty,
         visible="legendonly",
         showlegend=False,
@@ -133,6 +135,7 @@ def write_year_lineplot_interactive(
     width_inst: float = 4,
     width_fac_total: float = 4,
     fac_total_color: str = "#000000",
+    category_label_map: dict | None = None,
 ):
     """Write a yearly percentage line-chart HTML plot with faculty and institute drilldown to out_path."""
     if value_col not in df.columns:
@@ -152,6 +155,7 @@ def write_year_lineplot_interactive(
         line=dict(width=1),
         color=fac_total_color,
     )
+    category_label_map = category_label_map or {}
 
     df = df.copy()
     df = remap_institutes(df, params_global)
@@ -252,7 +256,7 @@ def write_year_lineplot_interactive(
             fac_by_year[fac_by_year["faculty"] == faculty],
             years_sorted,
             y_col="female_percentage",
-            name=faculty,
+            name=category_label_map.get(faculty, faculty),
             visible=True,
             showlegend=True,
             mode="lines+markers",
@@ -269,7 +273,7 @@ def write_year_lineplot_interactive(
             fac_year_total[fac_year_total["faculty"] == faculty],
             years_sorted,
             y_col="faculty_year_total",
-            name=f"{faculty}{faculty_total_suffix}",
+            name=f"{category_label_map.get(faculty, faculty)}{faculty_total_suffix}",
             visible="legendonly",
             showlegend=False,
             mode="lines+markers",
@@ -296,6 +300,10 @@ def write_year_lineplot_interactive(
                 width_inst=width_inst,
                 marker_inst=marker_inst,
                 show_n=True,
+                display_label=category_label_map.get(
+                    institute_name, short_institute_label(institute_name)
+                ),
+                display_meta_label=category_label_map.get(institute_name),
             )
             institute_trace_indices_by_faculty[faculty].append(idx)
             all_institute_trace_indices.append(idx)
@@ -332,6 +340,7 @@ def write_year_lineplot_interactive(
         showleg_by_faculty=showleg_inst_by_fac,
         traceorder_default="reversed",
         traceorder_faculty="normal",
+        faculty_label_map=category_label_map,
     )
 
     apply_line_layout(

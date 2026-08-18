@@ -1,7 +1,8 @@
 from src.data_loading.load_data import load_data
 from src.plotting.plot_config import load_plot_config
 from src.plotting.plotting_data import (
-    PBA_CATEGORY_LABELS as pba_category_labels,
+    PBA_CATEGORY_LABELS as pba_category_defaults,
+    merge_category_label_maps,
     prepare_country_cat_matrix,
     prep_cship_and_pba_cats,
 )
@@ -19,12 +20,19 @@ def main():
     restcolor = params_global["restcolor"]
     color_order = params.get("color_order")
     stack_order = params.get("stack_order")
+    configured_labels = params.get("category_label_names")
     faculty_colormap = params_global["faculty_institute_mappings"]
-    citizenship_category_labels = {
+    citizenship_category_labels = merge_category_label_maps(
+        {
         "GER": "Deutschland",
         "EU": "EU-Ausland",
         "NEU": "Nicht-EU-Ausland",
-    }
+        },
+        configured_labels,
+    )
+    pba_category_labels = merge_category_label_maps(
+        pba_category_defaults, configured_labels
+    )
 
     data = load_data(DATA_DIR / "clean_data.csv", DATA_DIR / "cleaned_data_dtypes.json")
 

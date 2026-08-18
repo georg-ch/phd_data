@@ -150,9 +150,11 @@ def build_faculty_buttons(
     traceorder_faculty: str,
     extra_default_args: list | None = None,
     extra_faculty_args: list | None = None,
+    faculty_label_map: dict | None = None,
 ) -> tuple[list[dict], dict[str, int]]:
     """Return the Plotly update-menu button specs and the faculty-to-button-index lookup."""
     button_faculty_order = list(reversed(faculty_list))
+    faculty_label_map = faculty_label_map or {}
     buttons = [
         dict(
             label=all_label,
@@ -168,7 +170,7 @@ def build_faculty_buttons(
     for faculty in button_faculty_order:
         buttons.append(
             dict(
-                label=short_faculty_label(faculty),
+                label=short_faculty_label(faculty_label_map.get(faculty, faculty)),
                 method="update",
                 args=[
                     {

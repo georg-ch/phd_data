@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from scripts.paths import DATA_DIR
 from src.plotting.plot_config import load_plot_config
 from src.plotting.plotting_export import write_html
+from scripts.plotting.duration_density_common import configured_duration_colors
 
 
 def _yearmonth_to_year(years: pd.Series, months: pd.Series) -> pd.Series:
@@ -77,7 +78,7 @@ def _add_box_trace(
 
 def build_start_violin(feature_set: str) -> None:
     params, params_global, out_path = load_plot_config(f"start_densities_{feature_set}")
-    color_cycle = params_global["color_cycle"]
+    duration_colors = configured_duration_colors(params_global, start=True)
     always_dense_violin_style = bool(params.get("always_dense_violin_style", False))
     dense_violin_width = float(params.get("dense_violin_width", 0.5))
     dense_box_width = float(params.get("dense_box_width", 0.12))
@@ -100,9 +101,9 @@ def build_start_violin(feature_set: str) -> None:
     )
 
     plot_specs = [
-        ("LinkedIn-Start", actual_start, color_cycle[0], 0.42),
-        ("Modell-Start", model_start, color_cycle[2], 0.58),
-        ("Modell-Start (geclippt)", model_start_clipped, color_cycle[3], 0.62),
+        ("LinkedIn-Start", actual_start, duration_colors["linkedin_start"], 0.42),
+        ("Modell-Start", model_start, duration_colors["model_start"], 0.58),
+        ("Modell-Start (geclippt)", model_start_clipped, duration_colors["model_start_clipped"], 0.62),
     ]
 
     x_positions = [0.0, 0.48, 0.96]

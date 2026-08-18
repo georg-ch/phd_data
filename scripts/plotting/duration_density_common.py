@@ -9,6 +9,39 @@ import plotly.graph_objects as go
 DurationPlotSpec = tuple[str, pd.Series, str, float]
 
 
+_DURATION_COLOR_DEFAULTS = {
+    "linkedin": 0,
+    "defense_minus_acceptance": 1,
+    "model": 2,
+    "defense_minus_pba": 3,
+}
+_START_DURATION_COLOR_DEFAULTS = {
+    "linkedin_start": 0,
+    "model_start": 2,
+    "model_start_clipped": 3,
+}
+
+
+def configured_duration_colors(params_global, *, start: bool = False) -> dict[str, str]:
+    """Resolve configured duration-series palette indices with stable defaults."""
+    color_cycle = params_global["color_cycle"]
+    defaults = _START_DURATION_COLOR_DEFAULTS if start else _DURATION_COLOR_DEFAULTS
+    configured = params_global.get(
+        "start_duration_color_indices" if start else "duration_color_indices", {}
+    )
+    colors = {}
+    for name, default_index in defaults.items():
+        index = configured.get(name, default_index)
+        if isinstance(index, bool) or not isinstance(index, int):
+            raise TypeError(f"Color index for {name!r} must be an integer.")
+        if not 0 <= index < len(color_cycle):
+            raise ValueError(
+                f"Color index for {name!r} must be between 0 and {len(color_cycle) - 1}."
+            )
+        colors[name] = color_cycle[index]
+    return colors
+
+
 def duration_years_from_dates(later: pd.Series, earlier: pd.Series) -> pd.Series:
     """Return a duration in fractional years from two day-month-year string columns."""
     return (

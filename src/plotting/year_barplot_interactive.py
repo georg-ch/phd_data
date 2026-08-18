@@ -504,9 +504,11 @@ def write_year_barplot_interactive(
     remap_inst=True,
     normalize_inst=True,
     stack_order: list[str] | None = None,
+    category_label_map: dict | None = None,
 ):
     """Write an institute-based yearly stacked-bar HTML plot with faculty drilldown to out_path."""
     faculties = build_faculties(faculty_colormap)
+    category_label_map = category_label_map or {}
     singular_count_name = get_singular_count_name(count_name)
 
     if remap_inst:
@@ -578,7 +580,7 @@ def write_year_barplot_interactive(
             customdata_cols=["pct_of_year_total"],
             x=d["year"],
             y=d["count"],
-            name=f,
+            name=category_label_map.get(f, f),
             visible=True,
             showlegend=True,
             marker=dict(color=faculty_color[f]),
@@ -618,8 +620,8 @@ def write_year_barplot_interactive(
                 ],
                 x=d["year"],
                 y=d["count"],
-                name=short_institute_label(i_name),
-                meta=[i_name],
+                name=category_label_map.get(i_name, short_institute_label(i_name)),
+                meta=[category_label_map.get(i_name, i_name)],
                 legendgroup=f,
                 visible="legendonly",
                 showlegend=False,
@@ -632,7 +634,9 @@ def write_year_barplot_interactive(
                     "%{x}<br>"
                     "%{meta[0]}<br>"
                     "%{customdata[3]}<br>"
-                    f"%{{customdata[0]:.1%}} % aller {count_name} in " + f + "<br>"
+                    f"%{{customdata[0]:.1%}} % aller {count_name} in "
+                    + category_label_map.get(f, f)
+                    + "<br>"
                     f"%{{customdata[1]:.1%}} % aller {count_name} des Jahres"
                     "<br>%{customdata[2]}"
                     "<extra></extra>"
@@ -662,6 +666,7 @@ def write_year_barplot_interactive(
         traceorder_default="reversed",
         traceorder_faculty="normal",
         extra_default_args=[{}],
+        faculty_label_map=category_label_map,
     )
 
     apply_bar_layout(

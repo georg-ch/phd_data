@@ -9,6 +9,7 @@ from src.plotting.plotting_export import write_html
 
 from scripts.plotting.duration_density_common import (
     build_duration_violin_figure,
+    configured_duration_colors,
     duration_years_from_dates,
 )
 
@@ -55,7 +56,7 @@ def build_duration_densities_from_start(feature_set: str) -> None:
     params, params_global, out_path = load_plot_config(
         f"duration_densities_from_start_{feature_set}"
     )
-    color_cycle = params_global["color_cycle"]
+    duration_colors = configured_duration_colors(params_global)
 
     show_linkedin_and_model = params["show_linkedin_and_model"]
     use_model = params["use_model"]
@@ -96,16 +97,16 @@ def build_duration_densities_from_start(feature_set: str) -> None:
     )
 
     plot_specs = [
-        ("Verteidigung - Annahme", duration_accest, color_cycle[1], 0.55),
-        ("LinkedIn-Dauer", duration_linkedin, color_cycle[0], 0.38),
+        ("Verteidigung - Annahme", duration_accest, duration_colors["defense_minus_acceptance"], 0.55),
+        ("LinkedIn-Dauer", duration_linkedin, duration_colors["linkedin"], 0.38),
     ]
 
     if show_linkedin_and_model:
-        plot_specs.append((combined_label, duration_combined, color_cycle[2], 0.62))
+        plot_specs.append((combined_label, duration_combined, duration_colors["model"], 0.62))
     elif use_model:
-        plot_specs[-1] = (combined_label, duration_combined, color_cycle[0], 0.55)
+        plot_specs[-1] = (combined_label, duration_combined, duration_colors["linkedin"], 0.55)
 
-    plot_specs.append(("Verteidigung - PBA", duration_pbaest, color_cycle[3], 0.55))
+    plot_specs.append(("Verteidigung - PBA", duration_pbaest, duration_colors["defense_minus_pba"], 0.55))
 
     if show_linkedin_and_model:
         x_positions = [0.0, 0.46, 0.50, 0.96]
