@@ -28,6 +28,7 @@ from src.plotting.plotting_traces import (
     build_trace_visibility,
     prepare_plot_frame,
     sorted_with_rest,
+    ordered_with_preference,
 )
 
 
@@ -168,6 +169,7 @@ def write_year_barplot_interactive_by_category(
     category_label_map: dict | None = None,
     rest_aggregation: bool = True,
     stack_order: list[str] | None = None,
+    color_order: list[str] | None = None,
 ):
     """Write a category-based yearly stacked-bar HTML plot with faculty drilldown to out_path."""
     if category_label_map is None:
@@ -228,9 +230,15 @@ def write_year_barplot_interactive_by_category(
     if "Rest" in available_category_names:
         category_names.append("Rest")
 
+    category_color_order = color_order if color_order is not None else stack_order
+    color_names = (
+        category_names
+        if category_color_order is None
+        else ordered_with_preference(category_names, category_color_order)
+    )
     category_colors = {
         name: (restcolor if name == "Rest" else color_cycle[i % len(color_cycle)])
-        for i, name in enumerate(category_names)
+        for i, name in enumerate(color_names)
     }
 
     fig = go.Figure()
@@ -364,6 +372,7 @@ def write_category_barplot_interactive_by_category(
     stack_name: str,
     x_order: list[str] | None = None,
     legend_title: str = "",
+    color_order: list[str] | None = None,
 ):
     """Write a categorical stacked-bar HTML plot with faculty drilldown to out_path."""
     missing = [
@@ -384,7 +393,7 @@ def write_category_barplot_interactive_by_category(
 
     stack_colors = {
         name: (restcolor if name == "Rest" else color_cycle[i % len(color_cycle)])
-        for i, name in enumerate(stack_names)
+        for i, name in enumerate(ordered_with_preference(stack_names, color_order))
     }
 
     fig = go.Figure()

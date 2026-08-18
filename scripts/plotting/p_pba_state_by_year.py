@@ -16,7 +16,8 @@ def main():
     time_period = (params["start_year"], params["end_year"])
     min_category_count = params["n_min_categories"]
     stack_order = params.get("stack_order")
-    color_cycle = params_global["color_cycle"]
+    color_order = params.get("color_order")
+    color_cycle = params_global["color_palette_expanded"]
     restcolor = params_global["restcolor"]
     faculty_colormap = params_global["faculty_institute_mappings"]
 
@@ -44,6 +45,7 @@ def main():
         category_label_map=None,
         rest_aggregation=True,
         stack_order=stack_order,
+        color_order=color_order,
     )
 
 

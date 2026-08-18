@@ -54,6 +54,20 @@ def sorted_with_rest(values, *, rest_label: str = "Rest") -> list:
     return labels
 
 
+def ordered_with_preference(values, preferred_order=None, *, rest_label: str = "Rest") -> list:
+    """Return present labels in preferred order, then sorted order, with Rest last."""
+    available = set(values)
+    preferred = []
+    for label in preferred_order or []:
+        if label in available and label != rest_label and label not in preferred:
+            preferred.append(label)
+    remaining = sorted(available - set(preferred) - {rest_label})
+    labels = preferred + remaining
+    if rest_label in available:
+        labels.append(rest_label)
+    return labels
+
+
 def build_trace_visibility(
     n_traces: int,
     visible_indices,

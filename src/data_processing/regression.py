@@ -17,6 +17,7 @@ from statsmodels.stats.multitest import multipletests
 from scripts.paths import DATA_DIR
 from src.plotting.plot_config import load_plot_config
 from src.plotting.plotting_export import write_html
+from src.plotting.plotting_traces import ordered_with_preference
 
 
 def contrast_table(model, terms):
@@ -1597,6 +1598,7 @@ def plot_category_contrast_violins(
     show_forest_overlay = bool(plot_params.get("show_forest_overlay", True))
     forest_dense_offset = float(plot_params.get("forest_dense_offset", 0.24))
     category_replacements = plot_params.get("category_replacements", {})
+    color_order_by_feature = plot_params.get("color_order", {})
 
     plot_data = prefer_duration_computed(data, target_col)
     plot_data = engineer_features(plot_data, target_col)
@@ -1777,6 +1779,17 @@ def plot_category_contrast_violins(
         )
 
         x_positions = list(range(-len(left), 0)) + [0] + list(range(1, len(right) + 1))
+        feature_color_order = color_order_by_feature.get(feature, [])
+        non_reference_rows = [row for row in ordered if not row.get("is_reference")]
+        ordered_color_levels = ordered_with_preference(
+            [row["level"] for row in non_reference_rows],
+            feature_color_order,
+            rest_label="__no_rest__",
+        )
+        color_by_level = {
+            level: params_global["color_cycle"][idx % len(params_global["color_cycle"])]
+            for idx, level in enumerate(ordered_color_levels)
+        }
         all_values = pd.concat(
             [pd.to_numeric(row["values"], errors="coerce") for row in ordered],
             ignore_index=True,
@@ -1809,13 +1822,12 @@ def plot_category_contrast_violins(
             )
             display_label = f"{display_level}{(' ' + stars) if stars else ''}<br>{pct_txt}{model_pct_txt}"
             hover_label = f"{display_level}{(' ' + stars) if stars else ''}"
-            color = (
-                "#9a9a9a"
-                if row.get("is_reference")
-                else params_global["color_cycle"][
-                    idx % len(params_global["color_cycle"])
-                ]
-            )
+            if row.get("is_reference"):
+                color = "#9a9a9a"
+            elif feature in color_order_by_feature:
+                color = color_by_level[row["level"]]
+            else:
+                color = params_global["color_cycle"][idx % len(params_global["color_cycle"])]
             opacity = 0.36 if row.get("is_reference") else 0.58
             width, side = dense_violin_style(
                 len(ordered),

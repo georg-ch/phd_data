@@ -9,7 +9,7 @@ from src.plotting.plotting_data import (
 )
 from src.plotting.plotting_export import write_html
 from src.plotting.plotting_style import short_faculty_label
-from src.plotting.plotting_traces import sorted_with_rest
+from src.plotting.plotting_traces import ordered_with_preference, sorted_with_rest
 
 
 def build_hovertext_total(d, category_name, count_name):
@@ -91,14 +91,7 @@ def build_category_colors(
     category_names = set(category_total["category_name"]).union(
         category_faculty["category_name"]
     )
-    preferred = []
-    for name in color_order or []:
-        if name in category_names and name != "Rest" and name not in preferred:
-            preferred.append(name)
-    remaining = sorted(category_names - set(preferred) - {"Rest"})
-    ordered_names = preferred + remaining
-    if "Rest" in category_names:
-        ordered_names.append("Rest")
+    ordered_names = ordered_with_preference(category_names, color_order)
 
     return {
         name: restcolor if name == "Rest" else color_cycle[i % len(color_cycle)]

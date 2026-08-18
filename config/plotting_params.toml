@@ -1,7 +1,7 @@
 [global]
 # Schaltet zusätzliche Konsolen-Ausgaben der Plot-Skripte ein oder aus.
 verbose = false
-# Farbfolge für die Standard-Plots; wird pro Serie/Gruppe zyklisch verwendet.
+# Farbquelle: Standardpalette fuer positionale Kategorien; wird pro Serie/Gruppe zyklisch verwendet.
 color_cycle = [
   "#4E79A7", # blue
   "#F28E2B", # orange
@@ -12,7 +12,8 @@ color_cycle = [
   "#B07AA1", # purple
   "#FF9DA7", # pink
 ]
-# Erweiterte Farbpalette fuer Plots mit mehr Kategorien als die Standard-Folge.
+# Erweiterte Standardpalette fuer Plots mit mehr Kategorien als die Standard-Folge;
+# die Kategorie-Reihenfolge kommt dort aus `color_order` der jeweiligen Plotsektion.
 color_palette_expanded = [
   "#4E79A7", # blue
   "#F28E2B", # orange
@@ -30,10 +31,18 @@ color_palette_expanded = [
   "#E73F74", # magenta
   "#80BA5A", # lime
   "#E68310", # amber
+  "#264653", # dark blue-green
+  "#E76F51", # coral
+  "#2A9D8F", # turquoise
+  "#E9C46A", # sand
+  "#6D597A", # muted violet
+  "#A7C957", # light olive
+  "#F4A261", # peach
+  "#C44536", # dark coral red
 ]
-# Ersatzfarbe fuer nicht hervorgehobene oder zusammengefasste Elemente.
+# Feste Sonderfarbe fuer nicht hervorgehobene oder zusammengefasste Elemente (`Rest`).
 restcolor = "#BBBBBB"
-# Farbe fuer Institute innerhalb einer Fakultet, wenn sie in einem Gesamtplot markiert werden.
+# Feste Sonderfarbe fuer Institute innerhalb einer Fakultet, wenn sie in einem Gesamtplot markiert werden.
 fac_in_inst_color = "#7d7d7d"
 
 # Reihenfolge der Fachgruppen in den Uebersichts- und Vergleichsplots.
@@ -46,6 +55,7 @@ subject_groups = [
 ]
 
 [global.faculty_institute_mappings."Fakultät I"]
+# Semantische Farbquelle fuer Fakulteten/Institute: `color`-Indizes waehlen aus `global.color_cycle`.
 # Index der Hauptfarbe fuer diese Fakultaet.
 color = 0
 
@@ -139,7 +149,14 @@ color = 6
 "Institut für Theoretische Physik" = "Institut für Physik und Astronomie"
 "Zentrum für Astronomie und Astrophysik" = "Institut für Physik und Astronomie"
 
+[palette_preview]
+# Standalone preview of the configured standard and expanded palettes.
+out_folder = "int_plots"
+out_name = "color_palette_preview"
+
 [duration_densities]
+# Farbquelle: `global.color_cycle` mit fester Bedeutung je Modell-/Datenreihe;
+# kein `color_order`.
 # Nutzt Modell statt Rohdaten fuer die LinkedIn-Dauer, aber nur wenn die Modellkurve nicht ohnehin gemeinsam mit LinkedIn gezeigt wird.
 use_model = false
 # Zeigt LinkedIn- und Modellkurve gemeinsam an.
@@ -164,6 +181,8 @@ out_folder = "int_plots"
 out_name = "total_dur_densities"
 
 [duration_densities_simple]
+# Farbquelle: `global.color_cycle` mit fester Bedeutung je Modell-/Datenreihe;
+# kein `color_order`.
 # Nutzt die vereinfachte Schaetzung statt der Modell-Variante aus den normalen Durations-Plots.
 use_model = false
 # Zeigt LinkedIn- und vereinfachte Schaetzung gemeinsam an.
@@ -188,6 +207,8 @@ out_folder = "int_plots"
 out_name = "total_dur_densities_simple"
 
 [start_densities_anchor]
+# Farbquelle: `global.color_cycle` mit fester Bedeutung je Modell-/Datenreihe;
+# kein `color_order`.
 # Erzwingt die kompakte Violin-Darstellung auch fuer wenige Kategorien.
 always_dense_violin_style = true
 # Breite der Violine im kompakten Modus.
@@ -200,6 +221,8 @@ out_folder = "int_plots"
 out_name = "start_densities_anchor"
 
 [start_densities_defense]
+# Farbquelle: `global.color_cycle` mit fester Bedeutung je Modell-/Datenreihe;
+# kein `color_order`.
 # Erzwingt die kompakte Violin-Darstellung auch fuer wenige Kategorien.
 always_dense_violin_style = true
 # Breite der Violine im kompakten Modus.
@@ -212,6 +235,8 @@ out_folder = "int_plots"
 out_name = "start_densities_defense"
 
 [duration_densities_from_start_anchor]
+# Farbquelle: `global.color_cycle` mit fester Bedeutung je Modell-/Datenreihe;
+# kein `color_order`.
 # Nutzt das Modell statt der Rohdaten fuer die LinkedIn-Dauer, aber nur wenn die Modellkurve nicht ohnehin gemeinsam mit LinkedIn gezeigt wird.
 use_model = false
 # Zeigt LinkedIn- und Modellkurve gemeinsam an.
@@ -236,6 +261,8 @@ out_folder = "int_plots"
 out_name = "duration_densities_from_start_anchor"
 
 [duration_densities_from_start_defense]
+# Farbquelle: `global.color_cycle` mit fester Bedeutung je Modell-/Datenreihe;
+# kein `color_order`.
 # Nutzt das Modell statt der Rohdaten fuer die LinkedIn-Dauer, aber nur wenn die Modellkurve nicht ohnehin gemeinsam mit LinkedIn gezeigt wird.
 use_model = false
 # Zeigt LinkedIn- und Modellkurve gemeinsam an.
@@ -260,6 +287,7 @@ out_folder = "int_plots"
 out_name = "duration_densities_from_start_defense"
 
 [acc_by_year]
+# Farbquelle: semantisches `global.faculty_institute_mappings`; kein `color_order`.
 # Filterung Untergrenze (Annahme)
 start_year = 2014
 # Filterung Obergrenze (Annahme)
@@ -274,6 +302,7 @@ out_folder = "int_plots"
 out_name = "acceptance_by_year"
 
 [def_by_year]
+# Farbquelle: semantisches `global.faculty_institute_mappings`; kein `color_order`.
 # Filterung Untergrenze (Verteidigung)
 start_year = 2018
 # Filterung Obergrenze (Verteidigung)
@@ -288,6 +317,7 @@ out_folder = "int_plots"
 out_name = "defense_by_year"
 
 [study_matrix]
+# Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze (Annahme)
 start_year = 2014
 # Filterung Obergrenze (Annahme)
@@ -300,8 +330,10 @@ n_min_categories = 5
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "region_matrix_barplot"
+color_order = ["Deutschland", "EU-Ausland", "Nicht-EU-Ausland"]
 
 [study_matrix_def]
+# Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze (Annahme)
 start_year = 2018
 # Filterung Obergrenze (Annahme)
@@ -314,8 +346,11 @@ n_min_categories = 5
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "region_matrix_barplot_def"
+color_order = ["Deutschland", "EU-Ausland", "Nicht-EU-Ausland"]
 
 [pbacat_by_year]
+# Farbquelle: `global.color_cycle` plus `color_order` unten; `stack_order` steuert zusaetzlich
+# die Stapel-/Trace-Reihenfolge; `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze (PBA)
 start_year = 2014
 # Filterung Obergrenze (PBA)
@@ -328,9 +363,12 @@ n_min_categories = 5
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "pba_category_by_year"
+color_order = ["TU Berlin", "FH", "in Deutschland", "in EU", "außerhalb EU"]
 stack_order = ["TU Berlin", "FH", "in Deutschland", "in EU", "außerhalb EU"]
 
 [pbacat_by_year_def]
+# Farbquelle: `global.color_cycle` plus `color_order` unten; `stack_order` steuert zusaetzlich
+# die Stapel-/Trace-Reihenfolge; `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze (PBA)
 start_year = 2018
 # Filterung Obergrenze (PBA)
@@ -343,21 +381,65 @@ n_min_categories = 5
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "pba_category_by_year_def"
+color_order = ["TU Berlin", "FH", "in Deutschland", "in EU", "außerhalb EU"]
 stack_order = ["TU Berlin", "FH", "in Deutschland", "in EU", "außerhalb EU"]
 
 [country_by_year]
+# Farbquelle: `global.color_cycle` plus `color_order` unten; `stack_order` steuert zusaetzlich
+# die Stapel-/Trace-Reihenfolge; `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze (Anmeldung)
 start_year = 2014
 # Filterung Obergrenze (Anmeldung)
 end_year = 2025
 
-# Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
-n_min_categories = 5
+# Mindestanzahl pro Jahr; 6 ergibt hier hoechstens 24 benannte Kategorien
+# und passt damit in die erweiterte 16-Farben-Palette.
+n_min_categories = 6
 
 # Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "pba_state_by_year"
+color_order = [
+  "Deutschland",
+  "China",
+  "Vereinigtes Königreich",
+  "Islamische Republik Iran",
+  "Frankreich",
+  "Italien",
+  "Indien",
+  "Spanien",
+  "Türkei",
+  "Ägypten",
+  "Russische Föderation",
+  "Niederlande",
+  "Brasilien",
+  "Griechenland",
+  "Österreich",
+  "Pakistan",
+  "Arabische Republik Syrien",
+  "Kolumbien",
+  "Indonesien",
+  "Schweiz",
+  "Republik Korea",
+  "Vereinigte Staaten",
+  "Schweden",
+  "Chile",
+  "Portugal",
+  "Polen",
+  "Belgien",
+  "Japan",
+  "Kanada",
+  "Australien",
+  "Mexiko",
+  "Ukraine",
+  "Israel",
+  "Rumänien",
+  "Vietnam",
+  "Neuseeland",
+  "Argentinien",
+  "Saudi-Arabien",
+]
 stack_order = [
   "Deutschland",
   "China",
@@ -400,18 +482,61 @@ stack_order = [
 ]
 
 [country_by_year_def]
+# Farbquelle: `global.color_cycle` plus `color_order` unten; `stack_order` steuert zusaetzlich
+# die Stapel-/Trace-Reihenfolge; `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze (Anmeldung)
 start_year = 2018
 # Filterung Obergrenze (Anmeldung)
 end_year = 2025
 
-# Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
-n_min_categories = 5
+# Mindestanzahl pro Jahr; 6 ergibt hier hoechstens 24 benannte Kategorien
+# und passt damit in die erweiterte 16-Farben-Palette.
+n_min_categories = 6
 
 # Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "pba_state_by_year_def"
+color_order = [
+  "Deutschland",
+  "China",
+  "Vereinigtes Königreich",
+  "Islamische Republik Iran",
+  "Frankreich",
+  "Italien",
+  "Indien",
+  "Spanien",
+  "Türkei",
+  "Ägypten",
+  "Russische Föderation",
+  "Niederlande",
+  "Brasilien",
+  "Griechenland",
+  "Österreich",
+  "Pakistan",
+  "Arabische Republik Syrien",
+  "Kolumbien",
+  "Indonesien",
+  "Schweiz",
+  "Republik Korea",
+  "Vereinigte Staaten",
+  "Schweden",
+  "Chile",
+  "Portugal",
+  "Polen",
+  "Belgien",
+  "Japan",
+  "Kanada",
+  "Australien",
+  "Mexiko",
+  "Ukraine",
+  "Israel",
+  "Rumänien",
+  "Vietnam",
+  "Neuseeland",
+  "Argentinien",
+  "Saudi-Arabien",
+]
 stack_order = [
   "Deutschland",
   "China",
@@ -454,35 +579,120 @@ stack_order = [
 ]
 
 [cship_by_year]
+# Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze (Anmeldung)
 start_year = 2014
 # Filterung Obergrenze (Anmeldung)
 end_year = 2025
 
-# Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
-n_min_categories = 5
+# Mindestanzahl pro Jahr; 6 ergibt hier hoechstens 24 benannte Kategorien
+# und passt damit in die erweiterte 16-Farben-Palette.
+n_min_categories = 6
 
 # Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "cship_by_year"
+color_order = [
+  "Deutschland",
+  "China",
+  "Vereinigtes Königreich",
+  "Islamische Republik Iran",
+  "Frankreich",
+  "Italien",
+  "Indien",
+  "Spanien",
+  "Türkei",
+  "Ägypten",
+  "Russische Föderation",
+  "Niederlande",
+  "Brasilien",
+  "Griechenland",
+  "Österreich",
+  "Pakistan",
+  "Arabische Republik Syrien",
+  "Kolumbien",
+  "Indonesien",
+  "Schweiz",
+  "Republik Korea",
+  "Vereinigte Staaten",
+  "Schweden",
+  "Chile",
+  "Portugal",
+  "Polen",
+  "Belgien",
+  "Japan",
+  "Kanada",
+  "Australien",
+  "Mexiko",
+  "Ukraine",
+  "Israel",
+  "Rumänien",
+  "Vietnam",
+  "Neuseeland",
+  "Argentinien",
+  "Saudi-Arabien",
+]
 
 [cship_by_year_def]
+# Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze (Anmeldung)
 start_year = 2018
 # Filterung Obergrenze (Anmeldung)
 end_year = 2025
 
-# Mindestanzahl an Kategorien, die fuer den Plot benoetigt werden.
-n_min_categories = 5
+# Mindestanzahl pro Jahr; 6 ergibt hier hoechstens 24 benannte Kategorien
+# und passt damit in die erweiterte 16-Farben-Palette.
+n_min_categories = 6
 
 # Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
 # Dateiname des erzeugten Plots.
 out_name = "cship_by_year_def"
+color_order = [
+  "Deutschland",
+  "China",
+  "Vereinigtes Königreich",
+  "Islamische Republik Iran",
+  "Frankreich",
+  "Italien",
+  "Indien",
+  "Spanien",
+  "Türkei",
+  "Ägypten",
+  "Russische Föderation",
+  "Niederlande",
+  "Brasilien",
+  "Griechenland",
+  "Österreich",
+  "Pakistan",
+  "Arabische Republik Syrien",
+  "Kolumbien",
+  "Indonesien",
+  "Schweiz",
+  "Republik Korea",
+  "Vereinigte Staaten",
+  "Schweden",
+  "Chile",
+  "Portugal",
+  "Polen",
+  "Belgien",
+  "Japan",
+  "Kanada",
+  "Australien",
+  "Mexiko",
+  "Ukraine",
+  "Israel",
+  "Rumänien",
+  "Vietnam",
+  "Neuseeland",
+  "Argentinien",
+  "Saudi-Arabien",
+]
 
 
 [pbacat_pie]
+# Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
 # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -512,6 +722,7 @@ EU = "Hochschule in Europa"
 NEU = "Hochschule außerhalb Europas"
 
 [pbacat_pie_def]
+# Farbquelle: `global.color_cycle` plus `color_order` unten; `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
 # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -557,6 +768,8 @@ NEU = "Hochschule außerhalb Europas"
 # 0 = 0
 
 [country_pie]
+# Farbquelle: `global.color_palette_expanded` plus `color_order` unten;
+# `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
 # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -617,6 +830,8 @@ out_name = "pba_state_acceptance"
 0 = 0
 
 [country_pie_def]
+# Farbquelle: `global.color_palette_expanded` plus `color_order` unten;
+# `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
 # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -677,6 +892,8 @@ out_name = "pba_state_def"
 0 = 0
 
 [cship_pie]
+# Farbquelle: `global.color_palette_expanded` plus `color_order` unten;
+# `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2014
 # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -737,6 +954,8 @@ out_name = "cship_acceptance"
 0 = 0
 
 [cship_pie_def]
+# Farbquelle: `global.color_palette_expanded` plus `color_order` unten;
+# `Rest` nutzt `global.restcolor`.
 # Filterung Untergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
 start_year = 2018
 # Filterung Obergrenze fuer den fuer das Pie-Chart zugrunde liegenden Zeitraum.
@@ -798,6 +1017,8 @@ out_name = "cship_def"
 0 = 0
 
 [gender_by_year_def]
+# Farbquelle: semantisches `global.faculty_institute_mappings`; Gesamt-/Rest-Reihen
+# nutzen zusaetzlich `global.fac_in_inst_color` bzw. `global.restcolor`; kein `color_order`.
 # Filterung Untergrenze fuer die Jahresreihe (Verteidigung).
 start_year = 2018
 # Filterung Obergrenze fuer die Jahresreihe (Verteidigung).
@@ -829,6 +1050,8 @@ width_total = 12
 width_fac_in_inst = 4
 
 [gender_by_year]
+# Farbquelle: semantisches `global.faculty_institute_mappings`; Gesamt-/Rest-Reihen
+# nutzen zusaetzlich `global.fac_in_inst_color` bzw. `global.restcolor`; kein `color_order`.
 # Filterung Untergrenze fuer die Jahresreihe (Anmeldung).
 start_year = 2014
 # Filterung Obergrenze fuer die Jahresreihe (Anmeldung).
@@ -861,6 +1084,8 @@ width_fac_in_inst = 4
 
 
 [subject]
+# Farbquelle: semantisches `global.faculty_institute_mappings`; Rest nutzt
+# `global.restcolor`; kein `color_order`.
 # Filter Untergrenze fuer die Sankey-Ansicht.
 start_year = 2014
 # Filter Obergrenze fuer die Sankey-Ansicht.
@@ -877,6 +1102,8 @@ node_thickness = 100
 
 
 [subject_overview]
+# Farbquelle: semantisches `global.faculty_institute_mappings`; Rest nutzt
+# `global.restcolor`; kein `color_order`.
 # Filter Untergrenze 
 start_year = 2014
 # Filter Obergrenze
@@ -893,6 +1120,8 @@ link_alpha = 0.7
 node_thickness = 100
 
 [regression]
+# Regressionsparametersektion; die zugehoerigen Effektdiagramme nutzen feste
+# Plotfarben im Code und keine konfigurierbare Kategorie-Farbordnung.
 # Filter Untergrenze fuer Dauer-Regression
 start_year = 2014
 # Filter Obergrenze fuer Dauer-Regression
@@ -915,6 +1144,7 @@ merge_cols = [
 ]
 
 [gender_regression]
+# Farbquelle: feste Signifikanzfarben im Code (rot/grau); kein `color_order`.
 # Filter Untergrenze fuer Gender-Regression
 start_year = 2014
 # Filter Obergrenze fuer Gender-Regression
@@ -937,6 +1167,7 @@ merge_cols = [
 ]
 
 [regression_features]
+# Farbquelle: feste Metrikfarben im Code; kein `color_order`.
 # Zielordner fuer die erzeugten HTML-Plots.
 out_folder = "int_plots"
 # Basisname fuer die Feature-Vergleichsplots.
@@ -963,6 +1194,8 @@ pba_grade_missing = "PBA-Note fehlt"
 pba_type = "PBA-Typ"
 
 [catcontrast_violins]
+# Farbquelle: `global.color_cycle` plus die per Feature angegebene `color_order` unten;
+# Referenzkategorien bleiben grau.
 # Zielvariable fuer die Violin-Vergleiche.
 target_column = "duration_computed"
 # Transformation der Zielvariable vor der Modellierung.
@@ -995,6 +1228,57 @@ y_label = "Dauer (Jahre)"
 out_folder = "int_plots"
 # Basisname fuer die erzeugten Plots.
 out_name = "catcontrast_violins"
+# Optional per-feature order for palette assignment to non-reference categories.
+# Reference categories remain gray.
+[catcontrast_violins.color_order]
+institute_name = [
+  "Institut für Sprache und Kommunikation",
+  "Institut für Berufliche Bildung und Arbeitslehre",
+  "Institut für Kunstwissenschaft und Historische Urbanistik",
+  "Institut für Philosophie, Literatur-, Wissenschafts- und Technikgeschichte",
+  "Zentrum für Antisemitismusforschung",
+  "Institut für Erziehungswissenschaft",
+  "Zentrum für Interdisziplinäre Frauen- und Geschlechterforschung",
+  "Institut für Chemie",
+  "Institut für Mathematik",
+  "Institut für Physik und Astronomie",
+  "Institut für Festkörperphysik",
+  "Institut für Optik und Atomare Physik",
+  "Institut für Theoretische Physik",
+  "Zentrum für Astronomie und Astrophysik",
+  "Institut für Biotechnologie",
+  "Institut für Werkstoffwissenschaften und -technologien",
+  "Institut für Prozess- und Verfahrenstechnik",
+  "Institut für Technischen Umweltschutz",
+  "Institut für Energietechnik",
+  "Institut für Lebensmitteltechnologie und Lebensmittelchemie",
+  "Institut für Softwaretechnik und Theoretische Informatik",
+  "Institut für Energie- und Automatisierungstechnik",
+  "Institut für Telekommunikationssysteme",
+  "Institut für Hochfrequenz- und Halbleiter-Systemtechnologien",
+  "Institut für Technische Informatik und Mikroelektronik",
+  "Institut für Wirtschaftsinformatik und Quantitative Methoden",
+  "Institut für Werkzeugmaschinen und Fabrikbetrieb",
+  "Institut für Land- und Seeverkehr",
+  "Institut für Maschinenkonstruktion und Systemtechnik",
+  "Institut für Strömungsmechanik und Technische Akustik (ISTA)",
+  "Institut für Luft- und Raumfahrt",
+  "Institut für Psychologie und Arbeitswissenschaft",
+  "Institut für Mechanik",
+  "Institut für Architektur",
+  "Institut für Bauingenieurwesen",
+  "Institut für Landschaftsarchitektur und Umweltplanung",
+  "Institut für Soziologie",
+  "Institut für Stadt- und Regionalplanung",
+  "Institut für Geodäsie und Geoinformationstechnik",
+  "Institut für Angewandte Geowissenschaften",
+  "Institut für Technologie und Management",
+  "Institut für Volkswirtschaftlehre und Wirtschaftsrecht",
+  "Institut für Betriebswirtschaftlehre",
+  "innoCampus - Innovations- und Kompetenzzentrum",
+]
+pba_category = ["TUB", "GER", "EU", "NEU"]
+is_male = ["True", "False"]
 [catcontrast_violins.category_replacements]
 # Ersetzungsregeln fuer Kategoriebezeichnungen im Plot.
 pba_category = { "GER" = "Deutschland", "NEU" = "nicht-EU", "TUB" = "TU Berlin" }

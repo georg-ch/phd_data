@@ -10,7 +10,7 @@ def main():
 
     time_period = (params["start_year"], params["end_year"])
     n_min = params["n_min_institute"]
-    color_cycle = params_global["color_cycle"]
+    color_cycle = params_global["color_palette_expanded"]
     restcolor = params_global["restcolor"]
     faculty_colormap = params_global["faculty_institute_mappings"]
 

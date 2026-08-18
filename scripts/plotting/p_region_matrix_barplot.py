@@ -15,8 +15,9 @@ def main():
     params, params_global, out_path = load_plot_config("study_matrix")
 
     time_period = (params["start_year"], params["end_year"])
-    color_cycle = params_global["color_cycle"]
+    color_cycle = params_global["color_palette_expanded"]
     restcolor = params_global["restcolor"]
+    color_order = params.get("color_order")
     faculty_colormap = params_global["faculty_institute_mappings"]
     citizenship_category_labels = {
         "GER": "Deutschland",
@@ -56,6 +57,7 @@ def main():
             if pba_category_labels[key] in set(df["pba_category"])
         ],
         legend_title="Staatsangehörigkeit<br>",
+        color_order=color_order,
     )
 
 
