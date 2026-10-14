@@ -1,5 +1,5 @@
 target_col_name = "start_val"
-feature_set = "anchor"
+feature_set = "defense"
 out_fname = "start_predictions_{feature_set}.csv"
 out_path = "data"
 eval_plot_dir = "data/start_eval_plots"

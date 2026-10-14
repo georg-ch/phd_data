@@ -15,9 +15,10 @@ from scripts.plotting.duration_density_common import (
 
 
 def yearmonth_to_year(years: pd.Series, months: pd.Series) -> pd.Series:
-    return pd.to_numeric(years, errors="coerce") + (
-        pd.to_numeric(months, errors="coerce") - 1
-    ) / 12
+    return (
+        pd.to_numeric(years, errors="coerce")
+        + (pd.to_numeric(months, errors="coerce") - 1) / 12
+    )
 
 
 def compute_double_long_side_from_start(start_data: pd.DataFrame) -> pd.Series:
@@ -97,24 +98,43 @@ def build_duration_densities_from_start(feature_set: str) -> None:
     )
 
     plot_specs = [
-        ("Verteidigung - Annahme", duration_accest, duration_colors["defense_minus_acceptance"], 0.55),
+        (
+            "Aussprache - Annahme",
+            duration_accest,
+            duration_colors["defense_minus_acceptance"],
+            0.55,
+        ),
         ("LinkedIn-Dauer", duration_linkedin, duration_colors["linkedin"], 0.38),
     ]
 
     if show_linkedin_and_model:
-        plot_specs.append((combined_label, duration_combined, duration_colors["model"], 0.62))
+        plot_specs.append(
+            (combined_label, duration_combined, duration_colors["model"], 0.62)
+        )
     elif use_model:
-        plot_specs[-1] = (combined_label, duration_combined, duration_colors["linkedin"], 0.55)
+        plot_specs[-1] = (
+            combined_label,
+            duration_combined,
+            duration_colors["linkedin"],
+            0.55,
+        )
 
-    plot_specs.append(("Verteidigung - PBA", duration_pbaest, duration_colors["defense_minus_pba"], 0.55))
+    plot_specs.append(
+        (
+            "Aussprache - PBA",
+            duration_pbaest,
+            duration_colors["defense_minus_pba"],
+            0.55,
+        )
+    )
 
     if show_linkedin_and_model:
         x_positions = [0.0, 0.46, 0.50, 0.96]
         x_tickvals = [0.0, 0.48, 0.96]
         x_ticktext = [
-            "Verteidigung - Annahme",
+            "Aussprache - Annahme",
             "LinkedIn / Modell",
-            "Verteidigung - PBA",
+            "Aussprache - PBA",
         ]
         x_padding = 0.26
     else:

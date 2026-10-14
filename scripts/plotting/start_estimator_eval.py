@@ -27,6 +27,9 @@ try:
 except ModuleNotFoundError:
 
     class _NoTheme:
+        def apply(self):
+            return None
+
         def apply_transforms(self):
             return None
 
@@ -40,10 +43,11 @@ TEST_SIZE = 0.5
 RANDOM_STATE = 42
 
 DISPLAY_LABELS = {
-    "start_anchor": "start / anchor",
-    "start_defense": "start / defense",
-    "duration_direct": "direct duration",
-    "duration_simple_temporal": "direct duration / temporal only",
+    "start_anchor": "Startmodell / Ankerdaten",
+    "start_defense": "Startmodell / Verteidigung",
+    "duration_direct": "direktes Dauermodell",
+    "duration_simple_temporal": "direktes Dauermodell / nur Zeitmerkmale",
+    "duration_acceptance": "Verteidigung - Annahme",
 }
 
 MODEL_ORDER = {
@@ -51,6 +55,7 @@ MODEL_ORDER = {
     "start_defense": 1,
     "duration_direct": 2,
     "duration_simple_temporal": 3,
+    "duration_acceptance": 4,
 }
 
 
@@ -87,6 +92,7 @@ def _predicted_start_val(df: pd.DataFrame, year_col: str, month_col: str) -> pd.
 
 def _start_eval_from_splits(feature_set: str, n_runs=N_RUNS) -> pd.DataFrame:
     data = load_data(DATA_DIR / "clean_data.csv", DATA_DIR / "cleaned_data_dtypes.json")
+    data["evaluation_gap_size"] = data["d_pba"] - data["d_acceptance"]
     data, feature_col_info = engineer_features_startdate(data, feature_set=feature_set)
     target_col = "start_val"
     labeled_data, cat_features = prepare_data_raw(
@@ -121,7 +127,9 @@ def _start_eval_from_splits(feature_set: str, n_runs=N_RUNS) -> pd.DataFrame:
         )
         fold_out["run"] = run
         fold_out["feature_set"] = feature_set
-        fold_out["gap_size"] = fold_out["acceptance_val"] - fold_out["pba_val"]
+        # This day-level distance is saved before start-feature engineering,
+        # which replaces d_pba/d_acceptance with month-level date scores.
+        fold_out["gap_size"] = fold_out["evaluation_gap_size"]
         fold_out["pred_start_val"] = _predicted_start_val(
             fold_out, "start_year_est", "start_month_est"
         )
@@ -143,6 +151,10 @@ def _start_eval_from_splits(feature_set: str, n_runs=N_RUNS) -> pd.DataFrame:
         )
         fold_out["duration_error_clipped"] = (
             fold_out["duration_estimate_clipped_s"] - fold_out["duration_computed"]
+        )
+        midpoint_duration = (fold_out["d_pba"] + fold_out["d_acceptance"]) / 2
+        fold_out["duration_error_midpoint"] = (
+            midpoint_duration - fold_out["duration_computed"]
         )
         outputs.append(_annotate(fold_out, f"start_{feature_set}"))
 
@@ -193,6 +205,10 @@ def _duration_eval_from_splits(n_runs=N_RUNS, *, simplify: bool = False) -> pd.D
         fold_out["duration_error_clipped"] = (
             fold_out["duration_estimate_clipped"] - fold_out["duration_computed"]
         )
+        midpoint_duration = (fold_out["d_pba"] + fold_out["d_acceptance"]) / 2
+        fold_out["duration_error_midpoint"] = (
+            midpoint_duration - fold_out["duration_computed"]
+        )
         outputs.append(
             _annotate(
                 fold_out,
@@ -203,9 +219,28 @@ def _duration_eval_from_splits(n_runs=N_RUNS, *, simplify: bool = False) -> pd.D
     return pd.concat(outputs, ignore_index=True)
 
 
-def _bin_stats(df: pd.DataFrame, bin_col: str, error_col: str, bin_edges=RMSE_BIN_EDGES) -> pd.DataFrame:
+def _acceptance_duration_estimator(duration_data: pd.DataFrame) -> pd.DataFrame:
+    """Represent defense minus acceptance as an additional duration estimator."""
+    out = duration_data.copy()
+    acceptance_error = out["d_acceptance"] - out["duration_computed"]
+    out["duration_error_raw"] = acceptance_error
+    out["duration_error_clipped"] = acceptance_error
+    return _annotate(out, "duration_acceptance")
+
+
+def _bin_stats(
+    df: pd.DataFrame,
+    bin_col: str,
+    error_col: str,
+    naive_error_col: str,
+    bin_edges=RMSE_BIN_EDGES,
+) -> pd.DataFrame:
     rows = []
-    valid = df[bin_col].notna() & df[error_col].notna()
+    valid = (
+        df[bin_col].notna()
+        & df[error_col].notna()
+        & df[naive_error_col].notna()
+    )
     for low, high in zip(bin_edges[:-1], bin_edges[1:]):
         if high == bin_edges[-1]:
             mask = valid & (df[bin_col] >= low) & (df[bin_col] <= high)
@@ -220,15 +255,72 @@ def _bin_stats(df: pd.DataFrame, bin_col: str, error_col: str, bin_edges=RMSE_BI
                 "bin_low": low,
                 "bin_high": high,
                 "bin_label": f"{low:g}-{high:g}",
-                "count": int(len(sub)),
+                "case_count": int(sub["pagination_nr"].nunique()),
+                "test_row_count": int(len(sub)),
                 "rmse": float(np.sqrt(np.mean(sub[error_col] ** 2))) if len(sub) else float("nan"),
                 "mae": float(np.mean(np.abs(sub[error_col]))) if len(sub) else float("nan"),
+                "naive_rmse": float(np.sqrt(np.mean(sub[naive_error_col] ** 2)))
+                if len(sub)
+                else float("nan"),
+                "naive_mae": float(np.mean(np.abs(sub[naive_error_col])))
+                if len(sub)
+                else float("nan"),
             }
         )
     return pd.DataFrame(rows)
 
 
-def _plot_legacy_comparison(
+def _comparison_values(
+    stats: pd.DataFrame, bins: list[str], metric_col: str
+) -> np.ndarray:
+    model_rmse = stats.set_index("bin_label")["rmse"].reindex(bins).to_numpy()
+    if metric_col != "fraction":
+        return model_rmse
+
+    naive_rmse = (
+        stats.set_index("bin_label")["naive_rmse"].reindex(bins).to_numpy()
+    )
+    return np.divide(
+        naive_rmse,
+        model_rmse,
+        out=np.full_like(model_rmse, np.nan),
+        where=model_rmse != 0,
+    )
+
+
+def _overall_comparison(
+    data: pd.DataFrame, error_col: str, naive_error_col: str
+) -> pd.DataFrame:
+    rows = []
+    for model_label, model_data in data.groupby("model_label", sort=False):
+        valid = model_data[[error_col, naive_error_col]].dropna()
+        model_rmse = float(np.sqrt(np.mean(valid[error_col] ** 2)))
+        naive_rmse = float(np.sqrt(np.mean(valid[naive_error_col] ** 2)))
+
+        run_improvements = []
+        for _, run_data in model_data.groupby("run", sort=False):
+            run_valid = run_data[[error_col, naive_error_col]].dropna()
+            run_model_rmse = float(np.sqrt(np.mean(run_valid[error_col] ** 2)))
+            run_naive_rmse = float(np.sqrt(np.mean(run_valid[naive_error_col] ** 2)))
+            run_improvements.append(100 * (1 - run_model_rmse / run_naive_rmse))
+
+        rows.append(
+            {
+                "model_label": model_label,
+                "display_label": DISPLAY_LABELS[model_label],
+                "n_pooled": len(valid),
+                "n_unique": int(model_data.loc[valid.index, "pagination_nr"].nunique()),
+                "model_rmse": model_rmse,
+                "naive_midpoint_rmse": naive_rmse,
+                "pooled_improvement_pct": 100 * (1 - model_rmse / naive_rmse),
+                "mean_run_improvement_pct": float(np.mean(run_improvements)),
+                "sd_run_improvement_pct": float(np.std(run_improvements, ddof=1)),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _plot_comparison(
     stats: pd.DataFrame,
     out_file: Path,
     *,
@@ -238,41 +330,49 @@ def _plot_legacy_comparison(
     title: str | None = None,
 ) -> None:
     bins = _bin_labels(RMSE_BIN_EDGES)
+    x_positions = np.arange(len(bins))
     ref_model = stats.sort_values("model_order").iloc[0]["model_label"]
     counts = (
         stats.loc[stats["model_label"] == ref_model]
-        .set_index("bin_label")["count"]
+        .set_index("bin_label")["case_count"]
         .reindex(bins)
         .fillna(0)
     )
-    if metric_col == "fraction":
-        counts_scaled = counts / counts.sum() * 10 + 1 if counts.sum() else counts + 1
-    else:
-        counts_scaled = counts / counts.sum() * 10 if counts.sum() else counts
-
     fig, ax = plt.subplots(figsize=(10, 6))
-    avg_guess_err = np.array(RMSE_BIN_EDGES)[1:] / 2
-    for _, gdf in stats.sort_values(["model_order", "bin_low"]).groupby("display_label", sort=False):
-        series = gdf.set_index("bin_label")["rmse"].reindex(bins).to_numpy()
-        if metric_col == "fraction":
-            metric = 1 / (series / avg_guess_err)
-        else:
-            metric = series
-        ax.plot(bins, metric, label=gdf["display_label"].iloc[0], marker="o")
-    ax.bar(bins, counts_scaled, alpha=0.3, label="Count")
+    grouped = stats.sort_values(["model_order", "bin_low"]).groupby(
+        "display_label", sort=False
+    )
+    for _, gdf in grouped:
+        metric = _comparison_values(gdf, bins, metric_col)
+        ax.plot(
+            x_positions,
+            metric,
+            label=gdf["display_label"].iloc[0],
+            marker="o",
+        )
+
+    ax2 = ax.twinx()
+    ax2.bar(
+        x_positions,
+        counts,
+        alpha=0.2,
+        color="gray",
+        label="Fallzahl",
+    )
+    ax.set_xticks(x_positions, bins)
+    ax2.tick_params(axis="x", bottom=False, labelbottom=False)
+    ax2.set_ylabel("Anzahl eindeutiger Fälle")
     ax.set_xlabel(xlabel)
     if metric_col == "fraction":
-        ax.set_ylabel("fraction")
+        ax.set_ylabel("RMSE Mittelpunkt / RMSE Schätzer")
+        ax.axhline(1, color="black", linestyle="--", linewidth=1)
     else:
-        ax.set_ylabel("rmse")
-    if metric_col == "fraction":
-        ax.set_ylim(1, 10)
-    else:
-        ax.set_ylim(0, 10)
+        ax.set_ylabel("RMSE")
+    ax.set_ylim(bottom=0)
     if title is not None:
         ax.set_title(title)
-    ax.legend()
-    theme.apply_transforms()
+    ax.legend(loc="upper left")
+    ax2.legend(loc="upper right")
     fig.tight_layout()
     fig.savefig(out_file, dpi=200, bbox_inches="tight")
     plt.close(fig)
@@ -287,47 +387,87 @@ def main():
     start_defense = _start_eval_from_splits("defense")
     duration_direct = _duration_eval_from_splits()
     duration_simple_temporal = _duration_eval_from_splits(simplify=True)
+    duration_acceptance = _acceptance_duration_estimator(duration_direct)
 
     start_df = pd.concat([start_anchor, start_defense], ignore_index=True)
     duration_df = pd.concat(
-        [start_anchor, start_defense, duration_direct, duration_simple_temporal],
+        [
+            start_anchor,
+            start_defense,
+            duration_direct,
+            duration_simple_temporal,
+            duration_acceptance,
+        ],
         ignore_index=True,
     )
 
     start_gap_stats = pd.concat(
-        [_bin_stats(gdf, "gap_size", "start_error_clipped") for _, gdf in start_df.groupby("model_label", sort=False)],
+        [
+            _bin_stats(
+                gdf,
+                "gap_size",
+                "start_error_clipped",
+                "start_error_midpoint",
+            )
+            for _, gdf in start_df.groupby("model_label", sort=False)
+        ],
         ignore_index=True,
     )
     duration_gap_stats = pd.concat(
-        [_bin_stats(gdf, "gap_size", "duration_error_clipped") for _, gdf in duration_df.groupby("model_label", sort=False)],
+        [
+            _bin_stats(
+                gdf,
+                "gap_size",
+                "duration_error_clipped",
+                "duration_error_midpoint",
+            )
+            for _, gdf in duration_df.groupby("model_label", sort=False)
+        ],
         ignore_index=True,
     )
+    start_gap_stats.to_csv(plot_dir / "start_gap_binned.csv", index=False)
+    duration_gap_stats.to_csv(plot_dir / "duration_gap_binned.csv", index=False)
 
-    _plot_legacy_comparison(
+    start_comparison = _overall_comparison(
+        start_df, "start_error_clipped", "start_error_midpoint"
+    )
+    duration_comparison = _overall_comparison(
+        duration_df, "duration_error_clipped", "duration_error_midpoint"
+    )
+    start_comparison.to_csv(plot_dir / "start_model_comparison.csv", index=False)
+    duration_comparison.to_csv(
+        plot_dir / "duration_model_comparison.csv", index=False
+    )
+    print("Start-model comparison:")
+    print(start_comparison.to_string(index=False))
+    print("\nDuration-model comparison:")
+    print(duration_comparison.to_string(index=False))
+
+    _plot_comparison(
         duration_gap_stats,
         plot_dir / "duration_gap_fraction_comparison.png",
-        xlabel="Acceptance minus PBA gap (years)",
+        xlabel="Abstand Annahme minus PBA (Jahre)",
         metric_col="fraction",
         theme=theme,
     )
-    _plot_legacy_comparison(
+    _plot_comparison(
         duration_gap_stats,
         plot_dir / "duration_gap_rmse_comparison.png",
-        xlabel="Acceptance minus PBA gap (years)",
+        xlabel="Abstand Annahme minus PBA (Jahre)",
         metric_col="rmse",
         theme=theme,
     )
-    _plot_legacy_comparison(
+    _plot_comparison(
         start_gap_stats,
         plot_dir / "start_gap_fraction_comparison.png",
-        xlabel="Acceptance minus PBA gap (years)",
+        xlabel="Abstand Annahme minus PBA (Jahre)",
         metric_col="fraction",
         theme=theme,
     )
-    _plot_legacy_comparison(
+    _plot_comparison(
         start_gap_stats,
         plot_dir / "start_gap_rmse_comparison.png",
-        xlabel="Acceptance minus PBA gap (years)",
+        xlabel="Abstand Annahme minus PBA (Jahre)",
         metric_col="rmse",
         theme=theme,
     )

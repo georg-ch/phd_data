@@ -115,7 +115,10 @@ def catboost_paramsearch(
     }
     FIXED = {
         "task_type": "CPU",
-        # "bootstrap_type": "Bernoulli",
+        # Make the meaning of the tuned ``subsample`` parameter explicit.
+        # CatBoost's CPU default (MVS) can fail for an otherwise valid trial
+        # when too few sampling units remain in a tree node.
+        "bootstrap_type": "Bernoulli",
         # "boosting_type": "Ordered",
         "random_strength": 1.0,
         "one_hot_max_size": 8,
